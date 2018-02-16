@@ -243,9 +243,11 @@ class TFT_22_ILI9225 {
         /// Draw ASCII Text (pixel coordinates)
         /// @param    x point coordinate, x-axis
         /// @param    y point coordinate, y-axis
-        /// @param    s text string
-        /// @param    color 16-bit color, default=white
-        void drawText(uint16_t x, uint16_t y, String s, uint16_t color = COLOR_WHITE);
+        /// @param    pStr Pointer to the string to draw
+		/// @param    color 16-bit color, default=white
+		/// @param    strLen [optional] number of chars to draw
+		void drawText(uint16_t x, uint16_t y, char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
+		void drawText(uint16_t x, uint16_t y, const char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
 
         /// Calculate 16-bit color from 8-bit Red-Green-Blue components
         /// @param    red red component, 0x00..0xff
@@ -315,18 +317,22 @@ class TFT_22_ILI9225 {
         /// Draw a string with the current GFX font
         /// @param    x point coordinate, x-axis
         /// @param    y point coordinate, y-axis
-        /// @param    s string to print
-        /// @param    color 16-bit color
-        void drawGFXText(int16_t x, int16_t y, String s, uint16_t color);
-        
-        /// Get the width & height of a text string with the current GFX font
-        /// @param    str string to analyze
-        /// @param    x point coordinate, x-axis
+		/// @param    pStr Pointer to the string to draw
+		/// @param    color 16-bit color, default=white
+		/// @param    strLen [optional] number of chars to draw
+		void drawGFXText(int16_t x, int16_t y, char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
+		void drawGFXText(int16_t x, int16_t y, const char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
+
+		/// Get the width & height of a text string with the current GFX font
+		/// @param    pStr Pointer to the string to draw
+		/// @param    x point coordinate, x-axis
         /// @param    y point coordinate, y-axis
         /// @param    w width in pixels of string 
         /// @param    h height in pixels of string
-        void getGFXTextExtent(String str, int16_t x, int16_t y, int16_t *w, int16_t *h);
-        
+		/// @param    strLen [optional] number of chars to draw
+		void getGFXTextExtent(char* pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
+		void getGFXTextExtent(const char* pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
+
         /// Draw a single character with the current GFX font
         /// @param    x point coordinate, x-axis
         /// @param    y point coordinate, y-axis
