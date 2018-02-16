@@ -246,8 +246,9 @@ class TFT_22_ILI9225 {
         /// @param    pStr Pointer to the string to draw
 		/// @param    color 16-bit color, default=white
 		/// @param    strLen [optional] number of chars to draw
-		void drawText(uint16_t x, uint16_t y, char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
-		void drawText(uint16_t x, uint16_t y, const char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
+		/// @return	  The new pixel coordinates of the X-axis
+		uint16_t drawText(uint16_t x, uint16_t y, char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
+		uint16_t drawText(uint16_t x, uint16_t y, const char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
 
         /// Calculate 16-bit color from 8-bit Red-Green-Blue components
         /// @param    red red component, 0x00..0xff
@@ -378,10 +379,9 @@ class TFT_22_ILI9225 {
 #else
         int8_t  _rst, _rs, _cs, _sdi, _clk, _led;
 #endif
-
+		int16_t writeRefCount;
         uint8_t  _orientation, _brightness;
-
-        bool  hwSPI, checkSPI, blState;
+        bool  hwSPI, blState;
 
         _currentFont cfont;
 

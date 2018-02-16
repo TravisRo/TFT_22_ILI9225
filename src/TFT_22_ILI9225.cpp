@@ -171,7 +171,7 @@ TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t sdi, int
 	_led = led;
 	_brightness = 255; // Set to maximum brightness
 	hwSPI = false;
-	checkSPI = true;
+	writeRefCount = true;
 	gfxFont = NULL;
 }
 
@@ -185,7 +185,7 @@ TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t sdi, int
 	_led = led;
 	_brightness = brightness;
 	hwSPI = false;
-	checkSPI = true;
+	writeRefCount = 0;
 	gfxFont = NULL;
 }
 
@@ -199,7 +199,7 @@ TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t led) {
 	_led = led;
 	_brightness = 255; // Set to maximum brightness
 	hwSPI = true;
-	checkSPI = true;
+	writeRefCount = 0;
 	gfxFont = NULL;
 }
 
@@ -214,7 +214,7 @@ TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t led, uin
 	_led = led;
 	_brightness = brightness;
 	hwSPI = true;
-	checkSPI = true;
+	writeRefCount = 0;
 	gfxFont = NULL;
 }
 
@@ -528,20 +528,17 @@ uint8_t TFT_22_ILI9225::getOrientation() { return _orientation; }
 
 void TFT_22_ILI9225::drawRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) {
 	startWrite();
-	checkSPI = false;
 	drawLine(x1, y1, x1, y2, color);
 	drawLine(x1, y1, x2, y1, color);
 	drawLine(x1, y2, x2, y2, color);
 	drawLine(x2, y1, x2, y2, color);
-	checkSPI = true;
 	endWrite();
 }
 
 
 void TFT_22_ILI9225::fillRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) {
-	_setWindow(x1, y1, x2, y2);
-
 	startWrite();
+	_setWindow(x1, y1, x2, y2);
 	for (uint16_t t = (y2 - y1 + 1) * (x2 - x1 + 1); t > 0; t--) _writeData(color >> 8, color);
 	endWrite();
 }
@@ -555,7 +552,6 @@ void TFT_22_ILI9225::drawCircle(uint16_t x0, uint16_t y0, uint16_t r, uint16_t c
 	int16_t y = r;
 
 	startWrite();
-	checkSPI = false;
 
 	drawPixel(x0, y0 + r, color);
 	drawPixel(x0, y0 - r, color);
@@ -581,7 +577,6 @@ void TFT_22_ILI9225::drawCircle(uint16_t x0, uint16_t y0, uint16_t r, uint16_t c
 		drawPixel(x0 + y, y0 - x, color);
 		drawPixel(x0 - y, y0 - x, color);
 	}
-	checkSPI = true;
 	endWrite();
 }
 
@@ -594,7 +589,6 @@ void TFT_22_ILI9225::fillCircle(uint8_t x0, uint8_t y0, uint8_t radius, uint16_t
 	int16_t y = radius;
 
 	startWrite();
-	checkSPI = false;
 	while (x < y) {
 		if (f >= 0) {
 			y--;
@@ -610,9 +604,8 @@ void TFT_22_ILI9225::fillCircle(uint8_t x0, uint8_t y0, uint8_t radius, uint16_t
 		drawLine(x0 + y, y0 - x, x0 + y, y0 + x, color); // right
 		drawLine(x0 - y, y0 - x, x0 - y, y0 + x, color); // left
 	}
-	checkSPI = true;
-	endWrite();
 	fillRectangle(x0 - x, y0 - y, x0 + x, y0 + y, color);
+	endWrite();
 }
 
 
@@ -641,9 +634,7 @@ void TFT_22_ILI9225::drawLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2
 	if (y1 < y2) ystep = 1;
 	else ystep = -1;
 
-	bool inTrans = checkSPI;
-	if (checkSPI) startWrite();
-	if (inTrans) checkSPI = false;
+	startWrite();
 	for (; x1 <= x2; x1++) {
 		if (steep) drawPixel(y1, x1, color);
 		else drawPixel(x1, y1, color);
@@ -654,19 +645,17 @@ void TFT_22_ILI9225::drawLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2
 			err += dx;
 		}
 	}
-	if (checkSPI) endWrite();
-	if (inTrans) checkSPI = true;
+	endWrite();
 }
 
 
 void TFT_22_ILI9225::drawPixel(uint16_t x1, uint16_t y1, uint16_t color) {
 	if ((x1 >= _maxX) || (y1 >= _maxY)) return;
 
+	startWrite();
 	_setWindow(x1, y1, x1 + 1, y1 + 1);
-	_orientCoordinates(x1, y1);
-	if (checkSPI) startWrite();
 	_writeData(color >> 8, color);
-	if (checkSPI) endWrite();
+	endWrite();
 }
 
 
@@ -717,11 +706,9 @@ void TFT_22_ILI9225::_writeRegister(uint16_t reg, uint16_t data) {
 
 void TFT_22_ILI9225::drawTriangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t x3, uint16_t y3, uint16_t color) {
 	startWrite();
-	checkSPI = false;
 	drawLine(x1, y1, x2, y2, color);
 	drawLine(x2, y2, x3, y3, color);
 	drawLine(x3, y3, x1, y1, color);
-	checkSPI = true;
 	endWrite();
 }
 
@@ -744,7 +731,6 @@ void TFT_22_ILI9225::fillTriangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_
 	}
 
 	startWrite();
-	checkSPI = false;
 	if (y1 == y3) { // Handle awkward all-on-same-line case as its own thing
 		a = b = x1;
 		if (x2 < a) a = x2;
@@ -752,57 +738,56 @@ void TFT_22_ILI9225::fillTriangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_
 		if (x3 < a) a = x3;
 		else if (x3 > b) b = x3;
 		drawLine(a, y1, b, y1, color);
-		return;
+	} else {
+
+		int16_t dx11 = x2 - x1,
+			dy11 = y2 - y1,
+			dx12 = x3 - x1,
+			dy12 = y3 - y1,
+			dx22 = x3 - x2,
+			dy22 = y3 - y2;
+		int32_t sa = 0,
+			sb = 0;
+
+		// For upper part of triangle, find scanline crossings for segments
+		// 0-1 and 0-2.  If y2=y3 (flat-bottomed triangle), the scanline y2
+		// is included here (and second loop will be skipped, avoiding a /0
+		// error there), otherwise scanline y2 is skipped here and handled
+		// in the second loop...which also avoids a /0 error here if y1=y2
+		// (flat-topped triangle).
+		if (y2 == y3) last = y2; // Include y2 scanline
+		else last = y2 - 1; // Skip it
+
+		for (y = y1; y <= last; y++) {
+			a = x1 + sa / dy11;
+			b = x1 + sb / dy12;
+			sa += dx11;
+			sb += dx12;
+			/* longhand:
+			a = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
+			b = x1 + (x3 - x1) * (y - y1) / (y3 - y1);
+			*/
+			if (a > b) _swap(a, b);
+			drawLine(a, y, b, y, color);
+		}
+
+		// For lower part of triangle, find scanline crossings for segments
+		// 0-2 and 1-2.  This loop is skipped if y2=y3.
+		sa = dx22 * (y - y2);
+		sb = dx12 * (y - y1);
+		for (; y <= y3; y++) {
+			a = x2 + sa / dy22;
+			b = x1 + sb / dy12;
+			sa += dx22;
+			sb += dx12;
+			/* longhand:
+			a = x2 + (x3 - x2) * (y - y2) / (y3 - y2);
+			b = x1 + (x3 - x1) * (y - y1) / (y3 - y1);
+			*/
+			if (a > b) _swap(a, b);
+			drawLine(a, y, b, y, color);
+		}
 	}
-
-	int16_t dx11 = x2 - x1,
-		dy11 = y2 - y1,
-		dx12 = x3 - x1,
-		dy12 = y3 - y1,
-		dx22 = x3 - x2,
-		dy22 = y3 - y2;
-	int32_t sa = 0,
-		sb = 0;
-
-	// For upper part of triangle, find scanline crossings for segments
-	// 0-1 and 0-2.  If y2=y3 (flat-bottomed triangle), the scanline y2
-	// is included here (and second loop will be skipped, avoiding a /0
-	// error there), otherwise scanline y2 is skipped here and handled
-	// in the second loop...which also avoids a /0 error here if y1=y2
-	// (flat-topped triangle).
-	if (y2 == y3) last = y2; // Include y2 scanline
-	else last = y2 - 1; // Skip it
-
-	for (y = y1; y <= last; y++) {
-		a = x1 + sa / dy11;
-		b = x1 + sb / dy12;
-		sa += dx11;
-		sb += dx12;
-		/* longhand:
-		a = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
-		b = x1 + (x3 - x1) * (y - y1) / (y3 - y1);
-		*/
-		if (a > b) _swap(a, b);
-		drawLine(a, y, b, y, color);
-	}
-
-	// For lower part of triangle, find scanline crossings for segments
-	// 0-2 and 1-2.  This loop is skipped if y2=y3.
-	sa = dx22 * (y - y2);
-	sb = dx12 * (y - y1);
-	for (; y <= y3; y++) {
-		a = x2 + sa / dy22;
-		b = x1 + sb / dy12;
-		sa += dx22;
-		sb += dx12;
-		/* longhand:
-		a = x2 + (x3 - x2) * (y - y2) / (y3 - y2);
-		b = x1 + (x3 - x1) * (y - y1) / (y3 - y1);
-		*/
-		if (a > b) _swap(a, b);
-		drawLine(a, y, b, y, color);
-	}
-	checkSPI = true;
 	endWrite();
 }
 
@@ -822,24 +807,30 @@ void TFT_22_ILI9225::setFont(uint8_t* font) {
 }
 
 
-void TFT_22_ILI9225::drawText(uint16_t x, uint16_t y, char* pStr, uint16_t color, uint8_t strLen) {
+uint16_t TFT_22_ILI9225::drawText(uint16_t x, uint16_t y, char* pStr, uint16_t color, uint8_t strLen) {
 	uint16_t currx = x;
 
+	startWrite();
 	// Print every character in string
 	for (uint8_t k = 0; pStr[k] != '\0' && k < strLen; k++) {
 		currx += drawChar(currx, y, pStr[k], color) + 1;
 	}
+	endWrite();
+	return currx;
 }
 
-void TFT_22_ILI9225::drawText(uint16_t x, uint16_t y, const char* pStr, uint16_t color, uint8_t strLen) {
+uint16_t TFT_22_ILI9225::drawText(uint16_t x, uint16_t y, const char* pStr, uint16_t color, uint8_t strLen) {
 	uint16_t currx = x;
 
+	startWrite();
 	// Print every character in string
 	for (uint8_t k = 0; k < strLen; k++) {
 		uint8_t c = pgm_read_byte(pStr + k);
 		if (c == 0) break;
 		currx += drawChar(currx, y, c, color) + 1;
 	}
+	endWrite();
+	return currx;
 }
 
 uint16_t TFT_22_ILI9225::drawChar(uint16_t x, uint16_t y, uint16_t ch, uint16_t color) {
@@ -853,7 +844,6 @@ uint16_t TFT_22_ILI9225::drawChar(uint16_t x, uint16_t y, uint16_t ch, uint16_t 
 	charOffset++; // increment pointer to first character data byte
 
 	startWrite();
-	checkSPI = false;
 	for (i = 0; i <= charWidth; i++) { // each font "column" (+1 blank column for spacing)
 		h = 0; // keep track of char height
 		for (j = 0; j < cfont.nbrows; j++) { // each column byte
@@ -870,7 +860,6 @@ uint16_t TFT_22_ILI9225::drawChar(uint16_t x, uint16_t y, uint16_t ch, uint16_t 
 			};
 		};
 	};
-	checkSPI = true;
 	endWrite();
 
 	return charWidth;
@@ -885,7 +874,6 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 	uint8_t byte = 0;
 
 	startWrite();
-	checkSPI = false;
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i++) {
 			if (i & 7) byte <<= 1;
@@ -893,7 +881,6 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 			if (byte & 0x80) drawPixel(x + i, y + j, color);
 		}
 	}
-	checkSPI = true;
 	endWrite();
 }
 
@@ -906,7 +893,6 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 	uint8_t byte;
 
 	startWrite();
-	checkSPI = false;
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i++) {
 			if (i & 7) byte <<= 1;
@@ -915,7 +901,6 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 			else drawPixel(x + i, y + j, bg);
 		}
 	}
-	checkSPI = true;
 	endWrite();
 }
 
@@ -926,7 +911,6 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 	uint8_t byte;
 
 	startWrite();
-	checkSPI = false;
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i++) {
 			if (i & 7) byte <<= 1;
@@ -934,7 +918,6 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 			if (byte & 0x80) drawPixel(x + i, y + j, color);
 		}
 	}
-	checkSPI = true;
 	endWrite();
 }
 
@@ -945,7 +928,6 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 	uint8_t byte;
 
 	startWrite();
-	checkSPI = false;
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i++) {
 			if (i & 7) byte <<= 1;
@@ -954,7 +936,6 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 			else drawPixel(x + i, y + j, bg);
 		}
 	}
-	checkSPI = true;
 	endWrite();
 }
 
@@ -967,7 +948,6 @@ void TFT_22_ILI9225::drawXBitmap(int16_t x, int16_t y,
 	uint8_t byte;
 
 	startWrite();
-	checkSPI = false;
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i++) {
 			if (i & 7) byte >>= 1;
@@ -975,18 +955,20 @@ void TFT_22_ILI9225::drawXBitmap(int16_t x, int16_t y,
 			if (byte & 0x01) drawPixel(x + i, y + j, color);
 		}
 	}
-	checkSPI = true;
 	endWrite();
 }
 
 
 void TFT_22_ILI9225::startWrite(void) {
+	if (++writeRefCount != 1) return;
+
 	SPI_BEGIN_TRANSACTION();
 	SPI_CS_LOW();
 }
 
 
 void TFT_22_ILI9225::endWrite(void) {
+	if (--writeRefCount != 0) return;
 	SPI_CS_HIGH();
 	SPI_END_TRANSACTION();
 }
@@ -1002,22 +984,26 @@ void  TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, char* pStr, uint16_t col
 	int16_t currx = x;
 
 	if (gfxFont) {
+		startWrite();
 		// Print every character in string
 		for (uint8_t k = 0; pStr[k]!='\0' && k < strLen; k++) {
 			currx += drawGFXChar(currx, y, pStr[k], color) + 1;
 		}
+		endWrite();
 	}
 }
 void  TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, const char* pStr, uint16_t color, uint8_t strLen) {
 	int16_t currx = x;
 
 	if (gfxFont) {
+		startWrite();
 		// Print every character in string
 		for (uint8_t k = 0; k < strLen; k++) {
 			uint8_t c = pgm_read_byte(pStr + k);
 			if (c == 0) break;
 			currx += drawGFXChar(currx, y, c, color) + 1;
 		}
+		endWrite();
 	}
 }
 
@@ -1038,7 +1024,6 @@ uint16_t TFT_22_ILI9225::drawGFXChar(int16_t x, int16_t y, unsigned char c, uint
 	// Add character clipping here one day
 
 	startWrite();
-	checkSPI = false;
 	for (yy = 0; yy < h; yy++) {
 		for (xx = 0; xx < w; xx++) {
 			if (!(bit++ & 7)) { bits = pgm_read_byte(&bitmap[bo++]); }
@@ -1046,7 +1031,6 @@ uint16_t TFT_22_ILI9225::drawGFXChar(int16_t x, int16_t y, unsigned char c, uint
 			bits <<= 1;
 		}
 	}
-	checkSPI = true;
 	endWrite();
 
 	return (uint16_t)xa;
