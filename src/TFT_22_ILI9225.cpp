@@ -547,8 +547,20 @@ void TFT_22_ILI9225::drawRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16
 
 void TFT_22_ILI9225::fillRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) {
 	startWrite();
+
 	_setWindow(x1, y1, x2, y2);
-	for (uint16_t t = (y2 - y1 + 1) * (x2 - x1 + 1); t > 0; t--) _writeData(color >> 8, color);
+
+	SPI_DC_HIGH();
+	SPI_CS_LOW();
+
+	for (uint16_t t = (y2 - y1 + 1) * (x2 - x1 + 1); t > 0; t--)
+	{
+		_spiWrite(color >> 8);
+		_spiWrite(color);
+	}
+
+	SPI_CS_HIGH();
+
 	endWrite();
 }
 
