@@ -891,17 +891,45 @@ uint16_t TFT_22_ILI9225::drawChar(uint16_t x, uint16_t y, uint16_t ch, uint16_t 
 // foreground color (unset bits are transparent).
 void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
                                 const uint8_t* bitmap, int16_t w, int16_t h, uint16_t color) {
-	int16_t i, j, byteWidth = (w + 7) / 8;
+	int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
 	uint8_t byte = 0;
 
 	startWrite();
-	for (j = 0; j < h; j++) {
-		for (i = 0; i < w; i++) {
-			if (i & 7) byte <<= 1;
-			else byte = pgm_read_byte(bitmap + j * byteWidth + i / 8);
-			if (byte & 0x80) drawPixel(x + i, y + j, color);
+
+	_setWindow(x, y, min((_width - 1), (x + w - 1)), min((_height - 1), (y + h - 1)));
+
+	int16_t prevX = x;
+	int16_t prevY = y;
+
+	for (int16_t j = 0; j<h; j++, y++) {
+		if (j >= _height) break;
+		for (int16_t i = 0; i<w; i++) {
+			if (i >= _width) break;
+			if (i & 7)
+				byte <<= 1;
+			else
+				byte = pgm_read_byte(&bitmap[j * byteWidth + i / 8]);
+
+			if (byte & 0x80)
+			{
+				if (prevX != x + i || prevY != y)
+				{
+					if (prevX != x + i)
+						_writeRegister(ramAddrOne, x + i);
+
+					if (prevY != y)
+						_writeRegister(ramAddrTwo, y);
+
+					_writeCommand(0x00, ILI9225_GRAM_DATA_REG);
+
+					prevX++;
+					prevY = y;
+				}
+				_writeData(color >> 8, color);
+			}
 		}
 	}
+
 	endWrite();
 }
 
