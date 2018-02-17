@@ -168,7 +168,7 @@ class TFT_22_ILI9225 {
 
         /// Set orientation
         /// @param     orientation orientation, 0=portrait, 1=right rotated landscape, 2=reverse portrait, 3=left rotated landscape
-        void setOrientation(uint8_t orientation);  
+        void setOrientation(uint8_t orientation, bool mirror = false);
 
         /// Get orientation
         /// @return    orientation orientation, 0=portrait, 1=right rotated landscape, 2=reverse portrait, 3=left rotated landscape
@@ -185,12 +185,12 @@ class TFT_22_ILI9225 {
         /// Screen size, x-axis
         /// @return   horizontal size of the screen, in pixels
         /// @note     240 means 240 pixels and thus 0..239 coordinates (decimal)
-        uint16_t maxX(void);
+        uint16_t getWidth(void);
 
         /// Screen size, y-axis
         /// @return   vertical size of the screen, in pixels
         /// @note     220 means 220 pixels and thus 0..219 coordinates (decimal)
-        uint16_t maxY(void);
+        uint16_t getHeight(void);
 
         /// Draw circle
         /// @param    x0 center, point coordinate, x-axis
@@ -351,12 +351,11 @@ class TFT_22_ILI9225 {
 
         void _swap(uint16_t &a, uint16_t &b);
         void _setWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
-        void _orientCoordinates(uint16_t &x1, uint16_t &y1);
         void _writeRegister(uint16_t reg, uint16_t data);
         void _writeData(uint8_t HI, uint8_t LO);
         void _writeCommand(uint8_t HI, uint8_t LO);
 
-        uint16_t _maxX, _maxY, _bgColor;
+        uint16_t _bgColor;
 
 #if defined (__AVR__) || defined(TEENSYDUINO)
         int8_t  _rst, _rs, _cs, _sdi, _clk, _led;
@@ -397,6 +396,8 @@ class TFT_22_ILI9225 {
         void getGFXCharExtent(uint8_t c, int16_t *gw, int16_t *gh, int16_t *xa);
         
         GFXfont *gfxFont;
+		uint8_t startH, endH, startV, endV, ramAddrOne, ramAddrTwo;
+		int16_t _width, _height, cursor_x, cursor_y; // Display w/h as modified by current rotation
 };
 
 #endif

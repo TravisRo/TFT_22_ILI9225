@@ -400,56 +400,21 @@ void TFT_22_ILI9225::_spiWriteData(uint8_t c) {
 	SPI_CS_HIGH();
 }
 
-void TFT_22_ILI9225::_orientCoordinates(uint16_t& x1, uint16_t& y1) {
-	switch (_orientation) {
-		case 0: // ok
-			break;
-		case 1: // ok
-			y1 = _maxY - y1 - 1;
-			_swap(x1, y1);
-			break;
-		case 2: // ok
-			x1 = _maxX - x1 - 1;
-			y1 = _maxY - y1 - 1;
-			break;
-		case 3: // ok
-			x1 = _maxX - x1 - 1;
-			_swap(x1, y1);
-			break;
-	}
-}
-
-
 void TFT_22_ILI9225::_setWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
-	_orientCoordinates(x0, y0);
-	_orientCoordinates(x1, y1);
-
-	if (x1 < x0) _swap(x0, x1);
-	if (y1 < y0) _swap(y0, y1);
-
 	startWrite();
-
-	_writeRegister(ILI9225_HORIZONTAL_WINDOW_ADDR1, x1);
-	_writeRegister(ILI9225_HORIZONTAL_WINDOW_ADDR2, x0);
-
-	_writeRegister(ILI9225_VERTICAL_WINDOW_ADDR1, y1);
-	_writeRegister(ILI9225_VERTICAL_WINDOW_ADDR2, y0);
-
-	_writeRegister(ILI9225_RAM_ADDR_SET1, x0);
-	_writeRegister(ILI9225_RAM_ADDR_SET2, y0);
-
-	_writeCommand(0x00, 0x22);
-
+	_writeRegister(endH, x1);
+	_writeRegister(startH, x0);
+	_writeRegister(endV, y1);
+	_writeRegister(startV, y0);
+	_writeRegister(ramAddrOne, x0);
+	_writeRegister(ramAddrTwo, y0);
+	_writeCommand(0x00, ILI9225_GRAM_DATA_REG);
 	endWrite();
 }
 
 
 void TFT_22_ILI9225::clear() {
-	uint8_t old = _orientation;
-	setOrientation(0);
-	fillRectangle(0, 0, _maxX - 1, _maxY - 1, COLOR_BLACK);
-	setOrientation(old);
-	delay(10);
+	fillRectangle(0, 0, _width - 1, _height - 1, _bgColor);
 }
 
 
@@ -499,27 +464,71 @@ void TFT_22_ILI9225::setDisplay(boolean flag) {
 }
 
 
-void TFT_22_ILI9225::setOrientation(uint8_t orientation) {
+void TFT_22_ILI9225::setOrientation(uint8_t orientation, bool mirror ) {
 	_orientation = orientation % 4;
 
-	switch (_orientation) {
-		case 0:
-			_maxX = ILI9225_LCD_WIDTH;
-			_maxY = ILI9225_LCD_HEIGHT;
-			break;
-		case 1:
-			_maxX = ILI9225_LCD_HEIGHT;
-			_maxY = ILI9225_LCD_WIDTH;
-			break;
-		case 2:
-			_maxX = ILI9225_LCD_WIDTH;
-			_maxY = ILI9225_LCD_HEIGHT;
-			break;
-		case 3:
-			_maxX = ILI9225_LCD_HEIGHT;
-			_maxY = ILI9225_LCD_WIDTH;
-			break;
+	startWrite();
+
+	switch (_orientation)
+	{
+	case 1:
+		_writeRegister(ILI9225_DRIVER_OUTPUT_CTRL, mirror ? 0x021C : 0x001C);
+		_writeRegister(ILI9225_ENTRY_MODE, 0x1038);
+
+		startH = ILI9225_VERTICAL_WINDOW_ADDR2;
+		endH = ILI9225_VERTICAL_WINDOW_ADDR1;
+		startV = ILI9225_HORIZONTAL_WINDOW_ADDR2;
+		endV = ILI9225_HORIZONTAL_WINDOW_ADDR1;
+		ramAddrOne = ILI9225_RAM_ADDR_SET2;
+		ramAddrTwo = ILI9225_RAM_ADDR_SET1;
+		_width = ILI9225_LCD_HEIGHT;
+		_height = ILI9225_LCD_WIDTH;
+		break;
+
+	case 2:
+		_writeRegister(ILI9225_DRIVER_OUTPUT_CTRL, mirror ? 0x031C : 0x021C);
+		_writeRegister(ILI9225_ENTRY_MODE, 0x1030);
+
+		startH = ILI9225_HORIZONTAL_WINDOW_ADDR2;
+		endH = ILI9225_HORIZONTAL_WINDOW_ADDR1;
+		startV = ILI9225_VERTICAL_WINDOW_ADDR2;
+		endV = ILI9225_VERTICAL_WINDOW_ADDR1;
+		ramAddrOne = ILI9225_RAM_ADDR_SET1;
+		ramAddrTwo = ILI9225_RAM_ADDR_SET2;
+		_width = ILI9225_LCD_WIDTH;
+		_height = ILI9225_LCD_HEIGHT;
+		break;
+
+	case 3:
+		_writeRegister(ILI9225_DRIVER_OUTPUT_CTRL, mirror ? 0x011C : 0x031C);
+		_writeRegister(ILI9225_ENTRY_MODE, 0x1038);
+
+		startH = ILI9225_VERTICAL_WINDOW_ADDR2;
+		endH = ILI9225_VERTICAL_WINDOW_ADDR1;
+		startV = ILI9225_HORIZONTAL_WINDOW_ADDR2;
+		endV = ILI9225_HORIZONTAL_WINDOW_ADDR1;
+		ramAddrOne = ILI9225_RAM_ADDR_SET2;
+		ramAddrTwo = ILI9225_RAM_ADDR_SET1;
+		_width = ILI9225_LCD_HEIGHT;
+		_height = ILI9225_LCD_WIDTH;
+		break;
+
+	default: // 0
+		_writeRegister(ILI9225_DRIVER_OUTPUT_CTRL, mirror ? 0x001C : 0x011C);
+		_writeRegister(ILI9225_ENTRY_MODE, 0x1030);
+		startH = ILI9225_HORIZONTAL_WINDOW_ADDR2;
+		endH = ILI9225_HORIZONTAL_WINDOW_ADDR1;
+		startV = ILI9225_VERTICAL_WINDOW_ADDR2;
+		endV = ILI9225_VERTICAL_WINDOW_ADDR1;
+		ramAddrOne = ILI9225_RAM_ADDR_SET1;
+		ramAddrTwo = ILI9225_RAM_ADDR_SET2;
+		_width = ILI9225_LCD_WIDTH;
+		_height = ILI9225_LCD_HEIGHT;
+		break;
 	}
+	_setWindow(0, 0, _width - 1, _height - 1);
+
+	endWrite();
 }
 
 
@@ -650,7 +659,7 @@ void TFT_22_ILI9225::drawLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2
 
 
 void TFT_22_ILI9225::drawPixel(uint16_t x1, uint16_t y1, uint16_t color) {
-	if ((x1 >= _maxX) || (y1 >= _maxY)) return;
+	if ((x1 >= _width) || (y1 >= _height)) return;
 
 	startWrite();
 	_setWindow(x1, y1, x1 + 1, y1 + 1);
@@ -659,10 +668,10 @@ void TFT_22_ILI9225::drawPixel(uint16_t x1, uint16_t y1, uint16_t color) {
 }
 
 
-uint16_t TFT_22_ILI9225::maxX() { return _maxX; }
+uint16_t TFT_22_ILI9225::getWidth() { return _width; }
 
 
-uint16_t TFT_22_ILI9225::maxY() { return _maxY; }
+uint16_t TFT_22_ILI9225::getHeight() { return _height; }
 
 
 uint16_t TFT_22_ILI9225::setColor(uint8_t red8, uint8_t green8, uint8_t blue8) {
