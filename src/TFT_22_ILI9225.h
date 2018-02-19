@@ -414,7 +414,7 @@ class TFT_22_ILI9225 {
         GFXfont *gfxFont;
 		uint8_t startH, endH, startV, endV, ramAddrOne, ramAddrTwo;
 		int16_t _width, _height, cursor_x, cursor_y;
-		int16_t _windowX, _windowY, _windowWidth, _windowHeight;
+		int16_t _windowX0, _windowY0, _windowX1, _windowY1, _windowWidth, _windowHeight;
 
 };
 

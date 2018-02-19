@@ -165,19 +165,17 @@
 
 #define INC_CURSOR() do {							\
 	cursor_x++;										\
-	if (cursor_x >= _windowX + _windowWidth ) {		\
-		cursor_x = _windowX;						\
+	if (cursor_x >= _windowX1 ) {					\
+		cursor_x = _windowX0;						\
 		cursor_y++;									\
-		if (cursor_y >= _windowY + _windowHeight) {	\
-			cursor_y = _windowY;					\
+		if (cursor_y >= _windowY1) {				\
+			cursor_y = _windowY0;					\
 		}											\
 	}												\
 }while(0)
 
-#define SET_WINDOW(_x,_y,_w,_h)	\
-	_setWindow(_x, _y, min(_x+_w-1,_width - 1), min(_y+_h-1,_height - 1))
-//_setWindow(max(_x, 0), max(_y, 0), min(_x + _w - 1, _width - 1), min(_y + _h - 1, _height - 1))
-
+#define SET_WINDOW_WH(_x,_y,_w,_h)	_setWindow(_x, _y, _x+_w-1, _y+_h-1)
+#define SET_WINDOW_POS(_x0,_y0,_x1,_y1)	_setWindow(_x0, _y0, _x1, _y1)
 #define SET_WINDOW_MAX() _setWindow(0, 0, _width - 1, _height - 1)
 
 //#define INC_CURSOR() cursor_x++
@@ -422,7 +420,12 @@ void TFT_22_ILI9225::_spiWriteData(uint8_t c) {
 
 void TFT_22_ILI9225::_setWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1) {
 
-	if (cursor_x != x0 || cursor_y != y0 || x0 != _windowX || y0 != _windowY || x1 - x0 + 1 != _windowWidth || y1 - y0 + 1 != _windowHeight) {
+	if (x1 >= _width) x1 = _width - 1;
+	if (y1 >= _height) y1 = _height - 1;
+	if (x0 >= _width) x0 = _width - 1;
+	if (y0 >= _height) y0 = _height - 1;
+
+	if (cursor_x != x0 || cursor_y != y0 || x0 != _windowX0 || y0 != _windowY0 || x1  != _windowX1 || y1 != _windowY1) {
 		_writeRegister(endH, x1);
 		_writeRegister(startH, x0);
 		_writeRegister(endV, y1);
@@ -432,8 +435,10 @@ void TFT_22_ILI9225::_setWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1) 
 
 		cursor_x = x0;
 		cursor_y = y0;
-		_windowX = x0;
-		_windowY = y0;
+		_windowX0 = x0;
+		_windowY0 = y0;
+		_windowX1 = x1;
+		_windowY1 = y1;
 		_windowWidth = x1 - x0 + 1;
 		_windowHeight = y1 - y0 + 1;
 	}
@@ -596,12 +601,12 @@ void TFT_22_ILI9225::drawRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y
 void TFT_22_ILI9225::fillRectangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color) {
 	startWrite();
 
-	SET_WINDOW(x1, y1, (x2 - x1 + 1), (y2 - y1 + 1));
+	SET_WINDOW_POS(x1, y1, x2, y2);
 
 	SPI_DC_HIGH();
 	SPI_CS_LOW();
 
-	for (uint16_t t = (y2 - y1 + 1) * (x2 - x1 + 1); t > 0; t--)
+	for (uint16_t t = _windowWidth * _windowHeight; t > 0; t--)
 	{
 		_spiWrite(color >> 8);
 		_spiWrite(color);
@@ -684,12 +689,12 @@ void TFT_22_ILI9225::drawHLine(int16_t x0, int16_t x1, int16_t y, uint16_t color
 
 	startWrite();
 
-	SET_WINDOW(x0, y, x1 - x0 + 1, 1);
+	SET_WINDOW_POS(x0, y, x1, y);
 
 	SPI_DC_HIGH();
 	SPI_CS_LOW();
-
-	while (--x1 >= 0) {
+	x0 = _windowWidth;
+	while (--x0 >= 0) {
 		_spiWrite(color >> 8);
 		_spiWrite(color);
 		INC_CURSOR();
@@ -707,11 +712,12 @@ void TFT_22_ILI9225::drawVLine(int16_t y0, int16_t y1, int16_t x, uint16_t color
 	
 	startWrite();
 
-	SET_WINDOW(x, y0, 1, y1 - y0 + 1);
+	SET_WINDOW_POS(x, y0, x, y1);
+
 	SPI_DC_HIGH();
 	SPI_CS_LOW();
-
-	while (--y1 >= 0) {
+	y0 = _windowHeight;
+	while (--y0 >= 0) {
 		_spiWrite(color >> 8);
 		_spiWrite(color);
 		INC_CURSOR();
@@ -967,7 +973,8 @@ int16_t TFT_22_ILI9225::drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t colo
 
 	startWrite();
 	for (i = 0; i <= charWidth; i++) { // each font "column" (+1 blank column for spacing)
-		SET_WINDOW(x + i, y, 1, cfont.height);
+		if (x + i >= _width) break; // No need to process excess bits
+		SET_WINDOW_WH(x + i, y, 1, cfont.height);
 		h = 0; // keep track of char height
 		for (j = 0; j < cfont.nbrows; j++) { // each column byte
 			if (i == charWidth) charData = (uint8_t)0x0; // Insert blank column
@@ -976,7 +983,7 @@ int16_t TFT_22_ILI9225::drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t colo
 
 			// Process every row in font character
 			for (uint8_t k = 0; k < 8; k++) {
-				if (h >= cfont.height) break; // No need to process excess bits
+				if (h >= _windowHeight) break; // No need to process excess bits
 				if (bitRead(charData, k)) _drawPixel(x + i, y + (j * 8) + k, color);
 				else _drawPixel(x + i, y + (j * 8) + k, _bgColor);
 				h++;
@@ -999,20 +1006,16 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 	uint8_t byte = 0;
 
 	startWrite();
-	SET_WINDOW(x, y, w, h);
+	SET_WINDOW_WH(x, y, w, h);
 
-	int16_t prevX = x;
-	int16_t prevY = y;
-
-	for (int16_t j = 0; j<h; j++, y++) {
-		if (j >= _height) break;
-		for (int16_t i = 0; i<w; i++) {
-			if (i >= _width) break;
+	for (int16_t j = 0; j < _windowHeight; j++, y++) {
+		for (int16_t i = 0; i< _windowWidth; i++) {
 			if (i & 7)
 				byte <<= 1;
 			else
 				byte = pgm_read_byte(&bitmap[j * byteWidth + i / 8]);
 
+			if (i + x >= _width) continue;
 			if (byte & 0x80)
 			{
 				_setCursor(x + i, y);
@@ -1167,11 +1170,11 @@ int16_t TFT_22_ILI9225::drawGFXChar(int16_t x, int16_t y, unsigned char c, uint1
 	// Add character clipping here one day
 
 	startWrite();
-	SET_WINDOW(x + xo, y + yo, w, h);
-	for (yy = 0; yy < h; yy++) {
-		for (xx = 0; xx < w; xx++) {
+	SET_WINDOW_WH(x + xo, y + yo, w, h);
+	for (yy = 0; yy < _windowHeight; yy++) {
+		for (xx = 0; xx < _windowWidth; xx++) {
 			if (!(bit++ & 7)) { bits = pgm_read_byte(&bitmap[bo++]); }
-			if (bits & 0x80) { drawPixel(x + xo + xx, y + yo + yy, color); }
+			if (bits & 0x80) { _drawPixel(x + xo + xx, y + yo + yy, color); }
 			bits <<= 1;
 		}
 	}
