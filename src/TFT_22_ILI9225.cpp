@@ -464,6 +464,20 @@ void TFT_22_ILI9225::_setCursor(int16_t x0, int16_t y0)
 }
 
 
+void TFT_22_ILI9225::_drawPixel(int16_t x, int16_t y, uint16_t color) {
+	if (x < 0 || y < 0 || x > _windowX1 || y > _windowY1) return;
+
+	_setCursor(x, y);
+	SPI_DC_HIGH();
+	SPI_CS_LOW();
+	_spiWrite(color >> 8);
+	_spiWrite(color);
+	SPI_CS_HIGH();
+
+	INC_CURSOR();
+}
+
+
 void TFT_22_ILI9225::_pushEntryModeVH() {
 	if (++entryModeVHCnt == 1) {
 		switch (_orientation)
@@ -815,15 +829,6 @@ void TFT_22_ILI9225::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, ui
 }
 
 
-void TFT_22_ILI9225::_drawPixel(int16_t x, int16_t y, uint16_t color) {
-	if (x < 0 || y < 0 || x > _windowX1 || y > _windowY1) return;
-
-	_setCursor(x, y);
-	_writeData(color >> 8, color);
-	INC_CURSOR();
-}
-
-
 void TFT_22_ILI9225::drawPixel(int16_t x, int16_t y, uint16_t color) {
 	if (x < 0 || y < 0 || x > _windowX1 || y > _windowY1) return;
 
@@ -1024,6 +1029,8 @@ int16_t TFT_22_ILI9225::drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t colo
 	startWrite();
 	_pushEntryModeVH();
 	SET_WINDOW_WH(x, y, charWidth+1, cfont.height);
+	SPI_DC_HIGH();
+	SPI_CS_LOW();
 
 	for (i = 0; i <= charWidth; i++) { // each font "column" (+1 blank column for spacing)
 		if (x + i > _windowX1) break; // No need to process excess bits
@@ -1037,10 +1044,15 @@ int16_t TFT_22_ILI9225::drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t colo
 			// Process every row in font character
 			for (uint8_t k = 0; k < 8; k++) {
 				if (h >= _windowHeight) break; // No need to process excess bits
-				if (bitRead(charData, k))
-					_writeData(color >> 8, color);
-				else
-					_writeData(_bgColor >> 8, _bgColor);
+				if (bitRead(charData, k)) {
+					_spiWrite(color >> 8);
+					_spiWrite(color);
+				}
+				else {
+					_spiWrite(_bgColor >> 8);
+					_spiWrite(_bgColor);
+				}
+
 				h++;
 			};
 		};
@@ -1071,10 +1083,7 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 				byte = pgm_read_byte(&bitmap[j * byteWidth + i / 8]);
 			if (byte & 0x80)
 			{
-				_setCursor(x + i, y);
-				_writeData(color >> 8, color);
-				INC_CURSOR();
-
+				_drawPixel(x + i, y, color);
 			}
 		}
 	}
@@ -1088,18 +1097,31 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 // foreground (for set bits) and background (for clear bits) colors.
 void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
                                 const uint8_t* bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg) {
-	int16_t i, j, byteWidth = (w + 7) / 8;
-	uint8_t byte;
+	int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
+	uint8_t byte = 0;
 
 	startWrite();
-	for (j = 0; j < h; j++) {
-		for (i = 0; i < w; i++) {
-			if (i & 7) byte <<= 1;
-			else byte = pgm_read_byte(bitmap + j * byteWidth + i / 8);
-			if (byte & 0x80) drawPixel(x + i, y + j, color);
-			else drawPixel(x + i, y + j, bg);
+	SET_WINDOW_WH(x, y, w, h);
+	SPI_DC_HIGH();
+	SPI_CS_LOW();
+
+	for (int16_t j = 0; j < _windowHeight; j++, y++) {
+		for (int16_t i = 0; i < _windowWidth; i++) {
+			if (i & 7)
+				byte <<= 1;
+			else
+				byte = pgm_read_byte(&bitmap[j * byteWidth + i / 8]);
+			if (byte & 0x80)
+			{
+				_spiWrite(color >> 8);
+				_spiWrite(color);
+			} else {
+				_spiWrite(bg >> 8);
+				_spiWrite(bg);
+			}
 		}
 	}
+
 	endWrite();
 }
 
@@ -1107,17 +1129,25 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 // drawBitmap() variant for RAM-resident (not PROGMEM) bitmaps.
 void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
                                 uint8_t* bitmap, int16_t w, int16_t h, uint16_t color) {
-	int16_t i, j, byteWidth = (w + 7) / 8;
-	uint8_t byte;
+	int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
+	uint8_t byte = 0;
 
 	startWrite();
-	for (j = 0; j < h; j++) {
-		for (i = 0; i < w; i++) {
-			if (i & 7) byte <<= 1;
-			else byte = bitmap[j * byteWidth + i / 8];
-			if (byte & 0x80) drawPixel(x + i, y + j, color);
+	SET_WINDOW_WH(x, y, w, h);
+
+	for (int16_t j = 0; j < _windowHeight; j++, y++) {
+		for (int16_t i = 0; i < _windowWidth; i++) {
+			if (i & 7)
+				byte <<= 1;
+			else
+				byte = bitmap[j * byteWidth + i / 8];
+			if (byte & 0x80)
+			{
+				_drawPixel(x + i, y, color);
+			}
 		}
 	}
+
 	endWrite();
 }
 
@@ -1125,18 +1155,27 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 // drawBitmap() variant w/background for RAM-resident (not PROGMEM) bitmaps.
 void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
                                 uint8_t* bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg) {
-	int16_t i, j, byteWidth = (w + 7) / 8;
-	uint8_t byte;
+	int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
+	uint8_t byte = 0;
 
 	startWrite();
-	for (j = 0; j < h; j++) {
-		for (i = 0; i < w; i++) {
-			if (i & 7) byte <<= 1;
-			else byte = bitmap[j * byteWidth + i / 8];
-			if (byte & 0x80) drawPixel(x + i, y + j, color);
-			else drawPixel(x + i, y + j, bg);
+	SET_WINDOW_WH(x, y, w, h);
+
+	for (int16_t j = 0; j < _windowHeight; j++, y++) {
+		for (int16_t i = 0; i < _windowWidth; i++) {
+			if (i & 7)
+				byte <<= 1;
+			else
+				byte = bitmap[j * byteWidth + i / 8];
+			if (byte & 0x80)
+			{
+				_writeData(color >> 8, color);
+			} else {
+				_writeData(bg >> 8, bg);
+			}
 		}
 	}
+
 	endWrite();
 }
 
@@ -1150,11 +1189,15 @@ void TFT_22_ILI9225::drawXBitmap(int16_t x, int16_t y,
 	uint8_t byte;
 
 	startWrite();
-	for (j = 0; j < h; j++) {
-		for (i = 0; i < w; i++) {
+	SET_WINDOW_WH(x, y, w, h);
+
+	for (int16_t j = 0; j < _windowHeight; j++, y++) {
+		for (int16_t i = 0; i < _windowWidth; i++) {
 			if (i & 7) byte >>= 1;
 			else byte = pgm_read_byte(bitmap + j * byteWidth + i / 8);
-			if (byte & 0x01) drawPixel(x + i, y + j, color);
+			if (byte & 0x01) {
+				_drawPixel(x + i, y, color);
+			}
 		}
 	}
 	endWrite();
