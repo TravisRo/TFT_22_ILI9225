@@ -192,19 +192,6 @@ class TFT_22_ILI9225 {
         /// @note     220 means 220 pixels and thus 0..219 coordinates (decimal)
         uint16_t maxY(void) { return _height; }
 
-		/// Gets the cursor x-axis positon
-		/// @return   x-axis positon
-		int16_t cursorX(void) { return cursor_x; }
-
-		/// Gets the cursor y-axis positon
-		/// @return   y-axis positon
-		int16_t cursorY(void) { return cursor_y; }
-
-		/// Sets the cursor position
-		/// @param    x0 x-axis positon in the range of 0 to maxX()-1
-		/// @param    y0 y-axis positon in the range of 0 to maxY()-1
-		void setCursor(int16_t x0, int16_t y0);
-
         /// Draw circle
         /// @param    x0 center, point coordinate, x-axis
         /// @param    y0 center, point coordinate, y-axis
