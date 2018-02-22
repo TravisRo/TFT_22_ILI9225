@@ -1034,7 +1034,7 @@ int16_t TFT_22_ILI9225::drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t colo
 
 	for (i = 0; i <= charWidth; i++) { // each font "column" (+1 blank column for spacing)
 		if (x + i > _windowX1) break; // No need to process excess bits
-		//SET_WINDOW_WH(x + i, y, 1, cfont.height);
+
 		h = 0; // keep track of char height
 		for (j = 0; j < cfont.nbrows; j++) { // each column byte
 			if (i == charWidth) charData = (uint8_t)0x0; // Insert blank column
