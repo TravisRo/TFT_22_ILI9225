@@ -5,13 +5,11 @@
         #include "wiring_private.h"
     #endif
 #endif
-
 #include <limits.h>
-
 #ifdef __AVR__
-    #include <avr/pgmspace.h>
+  #include <avr/pgmspace.h>
 #elif defined(ESP8266) || defined(ESP32)
-    #include <pgmspace.h>
+  #include <pgmspace.h>
 #endif
 
 // Many (but maybe not all) non-AVR board installs define macros
@@ -19,22 +17,22 @@
 // Do our own checks and defines here for good measure...
 
 #ifndef pgm_read_byte
-    #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
+ #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
 #endif
 #ifndef pgm_read_word
-    #define pgm_read_word(addr) (*(const unsigned short *)(addr))
+ #define pgm_read_word(addr) (*(const unsigned short *)(addr))
 #endif
 #ifndef pgm_read_dword
-    #define pgm_read_dword(addr) (*(const unsigned long *)(addr))
+ #define pgm_read_dword(addr) (*(const unsigned long *)(addr))
 #endif
 
 // Pointers are a peculiar case...typically 16-bit on AVR boards,
 // 32 bits elsewhere.  Try to accommodate both...
 
 #if !defined(__INT_MAX__) || (__INT_MAX__ > 0xFFFF)
-    #define pgm_read_pointer(addr) ((void *)pgm_read_dword(addr))
+ #define pgm_read_pointer(addr) ((void *)pgm_read_dword(addr))
 #else
-    #define pgm_read_pointer(addr) ((void *)pgm_read_word(addr))
+ #define pgm_read_pointer(addr) ((void *)pgm_read_word(addr))
 #endif
 
 // Control pins
@@ -73,7 +71,7 @@
 #define SSPI_WRITE_PIXELS(c,l)  for(uint32_t i=0; i<(l); i+=2){ SSPI_WRITE(((uint8_t*)(c))[i+1]); SSPI_WRITE(((uint8_t*)(c))[i]); }
 
 // Hardware SPI Macros
-
+ 
 #ifndef ESP32
     #define SPI_OBJECT  SPI
 #else
@@ -119,17 +117,18 @@
     #endif
 #else
     // Standard Byte-by-Byte SPI
+
     #if defined (__AVR__) || defined(TEENSYDUINO)
-        static inline uint8_t _avr_spi_read(void) __attribute__((always_inline));
-        static inline uint8_t _avr_spi_read(void) {
-            uint8_t r = 0;
-            SPDR = r;
-            while(!(SPSR & _BV(SPIF)));
-            r = SPDR;
-            return r;
-        }
+    static inline uint8_t _avr_spi_read(void) __attribute__((always_inline));
+    static inline uint8_t _avr_spi_read(void) {
+        uint8_t r = 0;
+        SPDR = r;
+        while(!(SPSR & _BV(SPIF)));
+        r = SPDR;
+        return r;
+    }
         #define HSPI_WRITE(b)        {SPDR = (b); while(!(SPSR & _BV(SPIF)));}
-        #define HSPI_READ()          _avr_spi_read()
+        // #define HSPI_READ()          _avr_spi_read()
     #else
         #define HSPI_WRITE(b)        SPI_OBJECT.transfer((uint8_t)(b))
         // #define HSPI_READ()          HSPI_WRITE(0)
@@ -140,9 +139,8 @@
 #endif
 
 // Final SPI Macros
-#if defined(ARDUINO_ARCH_STM32F1)
-    #define SPI_DEFAULT_FREQ         36000000
-#elif defined (ARDUINO_ARCH_ARC32)
+
+#if defined (ARDUINO_ARCH_ARC32)
     #define SPI_DEFAULT_FREQ         16000000
 #elif defined (__AVR__) || defined(TEENSYDUINO)
     #define SPI_DEFAULT_FREQ         8000000
@@ -150,6 +148,8 @@
     #define SPI_DEFAULT_FREQ         40000000
 #elif defined(RASPI)
     #define SPI_DEFAULT_FREQ         80000000
+#elif defined(ARDUINO_ARCH_STM32F1)
+    #define SPI_DEFAULT_FREQ         36000000
 #else
     #define SPI_DEFAULT_FREQ         24000000
 #endif
@@ -162,15 +162,15 @@
 // #define SPI_WRITE_PIXELS(c,l)   if(_clk < 0){HSPI_WRITE_PIXELS(c,l);}else{SSPI_WRITE_PIXELS(c,l);}
 
 /// Helper macro for managing the cursor position
-#define INC_CURSOR() do {							\
-    cursor_x++;										\
-    if (cursor_x >= _windowX1 ) {					\
-        cursor_x = _windowX0;						\
-        cursor_y++;									\
-        if (cursor_y >= _windowY1) {				\
-            cursor_y = _windowY0;					\
-        }											\
-    }												\
+#define INC_CURSOR() do {             \
+    cursor_x++;                       \
+    if (cursor_x >= _windowX1 ) {     \
+        cursor_x = _windowX0;         \
+        cursor_y++;	                  \
+        if (cursor_y >= _windowY1) {  \
+            cursor_y = _windowY0;     \
+        }                             \
+    }                                 \
 }while(0)
 
 // Helper macros for defining the window area
@@ -181,12 +181,12 @@
 
 // Constructor when using software SPI.  All output pins are configurable.
 TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t sdi, int8_t clk, int8_t led) {
-    _rst = rst;
-    _rs = rs;
-    _cs = cs;
-    _sdi = sdi;
-    _clk = clk;
-    _led = led;
+    _rst  = rst;
+    _rs   = rs;
+    _cs   = cs;
+    _sdi  = sdi;
+    _clk  = clk;
+    _led  = led;
     _brightness = 255; // Set to maximum brightness
     hwSPI = false;
     gfxFont = NULL;
@@ -194,12 +194,12 @@ TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t sdi, int
 
 // Constructor when using software SPI.  All output pins are configurable. Adds backlight brightness 0-255
 TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t sdi, int8_t clk, int8_t led, uint8_t brightness) {
-    _rst = rst;
-    _rs = rs;
-    _cs = cs;
-    _sdi = sdi;
-    _clk = clk;
-    _led = led;
+    _rst  = rst;
+    _rs   = rs;
+    _cs   = cs;
+    _sdi  = sdi;
+    _clk  = clk;
+    _led  = led;
     _brightness = brightness;
     hwSPI = false;
     gfxFont = NULL;
@@ -208,11 +208,11 @@ TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t sdi, int
 // Constructor when using hardware SPI.  Faster, but must use SPI pins
 // specific to each board type (e.g. 11,13 for Uno, 51,52 for Mega, etc.)
 TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t led) {
-    _rst = rst;
-    _rs = rs;
-    _cs = cs;
-    _sdi = _clk = -1;
-    _led = led;
+    _rst  = rst;
+    _rs   = rs;
+    _cs   = cs;
+    _sdi  = _clk = -1;
+    _led  = led;
     _brightness = 255; // Set to maximum brightness
     hwSPI = true;
     writeRefCount = 0;
@@ -224,11 +224,11 @@ TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t led) {
 // specific to each board type (e.g. 11,13 for Uno, 51,52 for Mega, etc.)
 // Adds backlight brightness 0-255
 TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t led, uint8_t brightness) {
-    _rst = rst;
-    _rs = rs;
-    _cs = cs;
-    _sdi = _clk = -1;
-    _led = led;
+     _rst  = rst;
+    _rs   = rs;
+    _cs   = cs;
+    _sdi  = _clk = -1;
+    _led  = led;
     _brightness = brightness;
     hwSPI = true;
     gfxFont = NULL;
