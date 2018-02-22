@@ -9,6 +9,8 @@
 #include <SPI.h>
 #include "gfxfont.h"
 
+#define TFT_USE_STRING_CLASS 1
+
 #if defined(ARDUINO_STM32_FEATHER) || defined(ARDUINO_ARCH_STM32) || defined(ARDUINO_ARCH_STM32F1) || defined(STM32F1)
 typedef volatile uint32 RwReg;
 #endif
@@ -217,8 +219,8 @@ class TFT_22_ILI9225 {
         /// @param    y2 end point coordinate, y-axis
         /// @param    color 16-bit color
         void drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color); 
-		void drawHLine(int16_t x0, int16_t x1, int16_t y, uint16_t color);
-		void drawVLine(int16_t y0, int16_t y1, int16_t x, uint16_t color);
+        void drawHLine(int16_t x0, int16_t x1, int16_t y, uint16_t color);
+        void drawVLine(int16_t y0, int16_t y1, int16_t x, uint16_t color);
 
         /// Draw rectangle, rectangle coordinates
         /// @param    x1 top left coordinate, x-axis
@@ -242,16 +244,25 @@ class TFT_22_ILI9225 {
         /// @param    color 16-bit color
         void drawPixel(int16_t x, int16_t y, uint16_t color);  
 
+#if TFT_USE_STRING_CLASS == 1
         /// Draw ASCII Text (pixel coordinates)
         /// @param    x point coordinate, x-axis
         /// @param    y point coordinate, y-axis
+        /// @param    s text string
+        /// @param    color 16-bit color, default=white
+        void drawText(int16_t x, int16_t y, String s, uint16_t color = COLOR_WHITE);
+#else
+		/// Draw ASCII Text (pixel coordinates)
+        /// @param    x point coordinate, x-axis
+        /// @param    y point coordinate, y-axis
         /// @param    pStr Pointer to the string to draw
-		/// @param    color 16-bit color, default=white
-		/// @param    strLen [optional] number of chars to draw
-		/// @return	  The new pixel coordinates of the X-axis
-		int16_t drawText(int16_t x, int16_t y, char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
-		int16_t drawText(int16_t x, int16_t y, const char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
+        /// @param    color 16-bit color, default=white
+        /// @param    strLen [optional] number of chars to draw
+        /// @return	  Width of the drawn string
+        int16_t drawText(int16_t x, int16_t y, char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
+        int16_t drawText(int16_t x, int16_t y, const char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
 
+#endif
         /// Calculate 16-bit color from 8-bit Red-Green-Blue components
         /// @param    red red component, 0x00..0xff
         /// @param    green green component, 0x00..0xff
@@ -317,24 +328,44 @@ class TFT_22_ILI9225 {
         /// @param    f GFX font name defined in include file
         void setGFXFont(const GFXfont *f = NULL);
 
+#if TFT_USE_STRING_CLASS == 1
         /// Draw a string with the current GFX font
         /// @param    x point coordinate, x-axis
         /// @param    y point coordinate, y-axis
-		/// @param    pStr Pointer to the string to draw
-		/// @param    color 16-bit color, default=white
-		/// @param    strLen [optional] number of chars to draw
-		void drawGFXText(int16_t x, int16_t y, char* pString, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
-		void drawGFXText(int16_t x, int16_t y, const char* pString, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
+        /// @param    string to draw
+        /// @param    color 16-bit color, default=white
+        /// @param    strLen [optional] number of chars to draw
+        void drawGFXText(int16_t x, int16_t y, String s, uint16_t color = COLOR_WHITE);
 
-		/// Get the width & height of a text string with the current GFX font
-		/// @param    pStr Pointer to the string to draw
-		/// @param    x point coordinate, x-axis
+        /// Get the width & height of a text string with the current GFX font
+        /// @param    str string to analyze
+        /// @param    x point coordinate, x-axis
         /// @param    y point coordinate, y-axis
         /// @param    w width in pixels of string 
         /// @param    h height in pixels of string
-		/// @param    strLen [optional] number of chars to draw
-		void getGFXTextExtent(char* pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
-		void getGFXTextExtent(const char* pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
+        void getGFXTextExtent(String str, int16_t x, int16_t y, int16_t *w, int16_t *h);
+
+#else
+        /// Draw a string pointer with the current GFX font
+        /// @param    x point coordinate, x-axis
+        /// @param    y point coordinate, y-axis
+        /// @param    pStr Pointer to the string to draw
+        /// @param    color 16-bit color, default=white
+        /// @param    strLen [optional] number of chars to draw
+        /// @return	  Width of the drawn string
+        int16_t drawGFXText(int16_t x, int16_t y, char* pString, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
+        int16_t drawGFXText(int16_t x, int16_t y, const char* pString, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
+
+        /// Get the width & height of a text string with the current GFX font
+        /// @param    pStr Pointer to the string to draw
+        /// @param    x point coordinate, x-axis
+        /// @param    y point coordinate, y-axis
+        /// @param    w width in pixels of string 
+        /// @param    h height in pixels of string
+        /// @param    strLen [optional] number of chars to draw
+        void getGFXTextExtent(char* pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
+        void getGFXTextExtent(const char* pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
+#endif
 
         /// Draw a single character with the current GFX font
         /// @param    x point coordinate, x-axis
@@ -356,11 +387,11 @@ class TFT_22_ILI9225 {
         void _writeRegister(uint16_t reg, uint16_t data);
         void _writeData(uint8_t HI, uint8_t LO);
         void _writeCommand(uint8_t HI, uint8_t LO);
-		void _setCursor(int16_t x, int16_t y);
-		void _drawPixel(int16_t x, int16_t y, uint16_t color);
-		void _pushEntryModeVH(void);
-		void _popEntryModeVH(void);
-		uint16_t _bgColor;
+        void _setCursor(int16_t x, int16_t y);
+        void _drawPixel(int16_t x, int16_t y, uint16_t color);
+        void _pushEntryModeVH(void);
+        void _popEntryModeVH(void);
+        uint16_t _bgColor;
 
 #if defined (__AVR__) || defined(TEENSYDUINO)
         int8_t  _rst, _rs, _cs, _sdi, _clk, _led;
@@ -383,7 +414,7 @@ class TFT_22_ILI9225 {
 #else
         int8_t  _rst, _rs, _cs, _sdi, _clk, _led;
 #endif
-		int8_t writeRefCount, entryModeVHCnt;
+        int8_t writeRefCount, entryModeVHCnt;
         uint8_t  _orientation, _brightness;
         bool  hwSPI, blState;
 
@@ -401,11 +432,11 @@ class TFT_22_ILI9225 {
         void getGFXCharExtent(uint8_t c, int16_t *gw, int16_t *gh, int16_t *xa);
         
         GFXfont *gfxFont;
-		uint8_t startH, endH, startV, endV, ramAddrOne, ramAddrTwo;
-		int16_t _width, _height, cursor_x, cursor_y;
-		int16_t _windowX0, _windowY0, _windowX1, _windowY1, _windowWidth, _windowHeight;
-		bool _useTransparentColor;
-		uint16_t _transparentColor;
+        uint8_t startH, endH, startV, endV, ramAddrOne, ramAddrTwo;
+        int16_t _width, _height, cursor_x, cursor_y;
+        int16_t _windowX0, _windowY0, _windowX1, _windowY1, _windowWidth, _windowHeight;
+        bool _useTransparentColor;
+        uint16_t _transparentColor;
 
 };
 
