@@ -148,7 +148,7 @@ class TFT_22_ILI9225 {
 #endif
 
         /// Clear the screen
-        void clear(void); 
+        void clear(uint16_t fillColor = COLOR_BLACK); 
 
         /// Invert screen
         /// @param     flag true to invert, false for normal screen
@@ -221,7 +221,7 @@ class TFT_22_ILI9225 {
 
         /// Set background color
         /// @param    color background color, default=black
-        void setBackgroundColor(uint16_t color = COLOR_BLACK);  
+        void setBackgroundColor(uint16_t color = COLOR_BLACK); 
 
         /// Draw line, rectangle coordinates
         /// @param    x1 start point coordinate, x-axis
@@ -336,8 +336,8 @@ class TFT_22_ILI9225 {
 		/// @param    pStr Pointer to the string to draw
 		/// @param    color 16-bit color, default=white
 		/// @param    strLen [optional] number of chars to draw
-		void drawGFXText(int16_t x, int16_t y, char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
-		void drawGFXText(int16_t x, int16_t y, const char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
+		void drawGFXText(int16_t x, int16_t y, char* pString, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
+		void drawGFXText(int16_t x, int16_t y, const char* pString, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
 
 		/// Get the width & height of a text string with the current GFX font
 		/// @param    pStr Pointer to the string to draw
@@ -371,6 +371,8 @@ class TFT_22_ILI9225 {
         void _writeCommand(uint8_t HI, uint8_t LO);
 		void _setCursor(int16_t x, int16_t y);
 		void _drawPixel(int16_t x, int16_t y, uint16_t color);
+		void _pushEntryModeVH(void);
+		void _popEntryModeVH(void);
 		uint16_t _bgColor;
 
 #if defined (__AVR__) || defined(TEENSYDUINO)
@@ -394,7 +396,7 @@ class TFT_22_ILI9225 {
 #else
         int8_t  _rst, _rs, _cs, _sdi, _clk, _led;
 #endif
-		int16_t writeRefCount;
+		int8_t writeRefCount, entryModeVHCnt;
         uint8_t  _orientation, _brightness;
         bool  hwSPI, blState;
 
@@ -415,6 +417,8 @@ class TFT_22_ILI9225 {
 		uint8_t startH, endH, startV, endV, ramAddrOne, ramAddrTwo;
 		int16_t _width, _height, cursor_x, cursor_y;
 		int16_t _windowX0, _windowY0, _windowX1, _windowY1, _windowWidth, _windowHeight;
+		bool _useTransparentColor;
+		uint16_t _transparentColor;
 
 };
 
