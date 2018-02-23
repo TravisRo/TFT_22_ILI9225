@@ -575,7 +575,9 @@ void TFT_22_ILI9225::setOrientation(uint8_t orientation, bool mirror ) {
 }
 
 
-uint8_t TFT_22_ILI9225::getOrientation() { return _orientation; }
+uint8_t TFT_22_ILI9225::getOrientation() { 
+    return _orientation;
+}
 
 
 void TFT_22_ILI9225::drawRectangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color) {
@@ -742,9 +744,9 @@ uint16_t TFT_22_ILI9225::setColor(uint8_t red8, uint8_t green8, uint8_t blue8) {
 
 void TFT_22_ILI9225::splitColor(uint16_t rgb, uint8_t &red, uint8_t &green, uint8_t &blue) {
     // rgb16 = red5 green6 blue5
-    red = (rgb & 0b1111100000000000) >> 11 << 3;
-    green = (rgb & 0b0000011111100000) >> 5 << 2;
-    blue = (rgb & 0b0000000000011111) << 3;
+    red   = (rgb & 0b1111100000000000) >> 11 << 3;
+    green = (rgb & 0b0000011111100000) >>  5 << 2;
+    blue  = (rgb & 0b0000000000011111)       << 3;
 }
 
 
@@ -788,75 +790,73 @@ void TFT_22_ILI9225::fillTriangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2
 
     // Sort coordinates by Y order (y3 >= y2 >= y1)
     if (y1 > y2) {
-        _swap(y1, y2);
-        _swap(x1, x2);
+        _swap(y1, y2); _swap(x1, x2);
     }
     if (y2 > y3) {
-        _swap(y3, y2);
-        _swap(x3, x2);
+        _swap(y3, y2); _swap(x3, x2);
     }
     if (y1 > y2) {
-        _swap(y1, y2);
-        _swap(x1, x2);
+        _swap(y1, y2); _swap(x1, x2);
     }
 
     startWrite();
     if (y1 == y3) { // Handle awkward all-on-same-line case as its own thing
         a = b = x1;
-        if (x2 < a) a = x2;
+        if (x2 < a)      a = x2;
         else if (x2 > b) b = x2;
-        if (x3 < a) a = x3;
+        if (x3 < a)      a = x3;
         else if (x3 > b) b = x3;
-        drawLine(a, y1, b, y1, color);
-    } else {
+            drawLine(a, y1, b, y1, color);
+        endWrite();
+        return;
+    }
 
-        int16_t dx11 = x2 - x1,
+    int16_t dx11 = x2 - x1,
             dy11 = y2 - y1,
             dx12 = x3 - x1,
             dy12 = y3 - y1,
             dx22 = x3 - x2,
             dy22 = y3 - y2;
-        int32_t sa = 0,
-            sb = 0;
+    int32_t sa   = 0,
+            sb   = 0;
 
-        // For upper part of triangle, find scanline crossings for segments
-        // 0-1 and 0-2.  If y2=y3 (flat-bottomed triangle), the scanline y2
-        // is included here (and second loop will be skipped, avoiding a /0
-        // error there), otherwise scanline y2 is skipped here and handled
-        // in the second loop...which also avoids a /0 error here if y1=y2
-        // (flat-topped triangle).
-        if (y2 == y3) last = y2; // Include y2 scanline
-        else last = y2 - 1; // Skip it
+    // For upper part of triangle, find scanline crossings for segments
+    // 0-1 and 0-2.  If y2=y3 (flat-bottomed triangle), the scanline y2
+    // is included here (and second loop will be skipped, avoiding a /0
+    // error there), otherwise scanline y2 is skipped here and handled
+    // in the second loop...which also avoids a /0 error here if y1=y2
+    // (flat-topped triangle).
+    if (y2 == y3) last = y2;   // Include y2 scanline
+    else          last = y2 - 1; // Skip it
 
-        for (y = y1; y <= last; y++) {
-            a = x1 + sa / dy11;
-            b = x1 + sb / dy12;
-            sa += dx11;
-            sb += dx12;
-            /* longhand:
-            a = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
-            b = x1 + (x3 - x1) * (y - y1) / (y3 - y1);
-            */
-            if (a > b) _swap(a, b);
+    for (y = y1; y <= last; y++) {
+        a   = x1 + sa / dy11;
+        b   = x1 + sb / dy12;
+        sa += dx11;
+        sb += dx12;
+        /* longhand:
+        a = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
+        b = x1 + (x3 - x1) * (y - y1) / (y3 - y1);
+        */
+        if (a > b) _swap(a,b);
+        drawLine(a, y, b, y, color);
+    }
+
+    // For lower part of triangle, find scanline crossings for segments
+    // 0-2 and 1-2.  This loop is skipped if y2=y3.
+    sa = dx22 * (y - y2);
+    sb = dx12 * (y - y1);
+    for (; y<=y3; y++) {
+        a   = x2 + sa / dy22;
+        b   = x1 + sb / dy12;
+        sa += dx22;
+        sb += dx12;
+        /* longhand:
+        a = x2 + (x3 - x2) * (y - y2) / (y3 - y2);
+        b = x1 + (x3 - x1) * (y - y1) / (y3 - y1);
+        */
+        if (a > b) _swap(a,b);
             drawLine(a, y, b, y, color);
-        }
-
-        // For lower part of triangle, find scanline crossings for segments
-        // 0-2 and 1-2.  This loop is skipped if y2=y3.
-        sa = dx22 * (y - y2);
-        sb = dx12 * (y - y1);
-        for (; y <= y3; y++) {
-            a = x2 + sa / dy22;
-            b = x1 + sb / dy12;
-            sa += dx22;
-            sb += dx12;
-            /* longhand:
-            a = x2 + (x3 - x2) * (y - y2) / (y3 - y2);
-            b = x1 + (x3 - x1) * (y - y1) / (y3 - y1);
-            */
-            if (a > b) _swap(a, b);
-            drawLine(a, y, b, y, color);
-        }
     }
     endWrite();
 }
@@ -867,15 +867,16 @@ void TFT_22_ILI9225::setBackgroundColor(uint16_t color) {
 }
 
 
-void TFT_22_ILI9225::setFont(uint8_t *font) {
-    cfont.font = font;
-    cfont.width = readFontByte(0);
-    cfont.height = readFontByte(1);
-    cfont.offset = readFontByte(2);
-    cfont.numchars = readFontByte(3);
-    cfont.nbrows = cfont.height / 8;
+void TFT_22_ILI9225::setFont(uint8_t* font) {
 
-    if (cfont.height % 8) cfont.nbrows++; // Set number of bytes used by height of font in multiples of 8
+    cfont.font     = font;
+    cfont.width    = readFontByte(0);
+    cfont.height   = readFontByte(1);
+    cfont.offset   = readFontByte(2);
+    cfont.numchars = readFontByte(3);
+    cfont.nbrows   = cfont.height / 8;
+
+    if (cfont.height % 8) cfont.nbrows++;  // Set number of bytes used by height of font in multiples of 8
 }
 
 #if TFT_USE_STRING_CLASS == 1
