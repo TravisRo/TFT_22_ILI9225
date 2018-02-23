@@ -224,7 +224,7 @@ TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t led) {
 // specific to each board type (e.g. 11,13 for Uno, 51,52 for Mega, etc.)
 // Adds backlight brightness 0-255
 TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t led, uint8_t brightness) {
-     _rst  = rst;
+    _rst  = rst;
     _rs   = rs;
     _cs   = cs;
     _sdi  = _clk = -1;
@@ -639,13 +639,13 @@ void TFT_22_ILI9225::setOrientation(uint8_t orientation, bool mirror ) {
 uint8_t TFT_22_ILI9225::getOrientation() { return _orientation; }
 
 
-void TFT_22_ILI9225::drawRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color) {
+void TFT_22_ILI9225::drawRectangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color) {
     startWrite();
 
-    drawHLine(x0, x1, y0, color);	// TOP
-    drawVLine(y0, y1, x0, color);	// LEFT
-    drawHLine(x0, x1, y1, color);	// BOTTOM
-    drawVLine(y0, y1, x1, color);	// RIGHT
+    drawHLine(x1, x2, y1, color);	// TOP
+    drawVLine(y1, y2, x1, color);	// LEFT
+    drawHLine(x1, x2, y2, color);	// BOTTOM
+    drawVLine(y1, y2, x2, color);	// RIGHT
 
     endWrite();
 }
@@ -735,72 +735,28 @@ void TFT_22_ILI9225::fillCircle(int16_t x0, int16_t y0, int16_t radius, uint16_t
     endWrite();
 }
 
-void TFT_22_ILI9225::drawHLine(int16_t x0, int16_t x1, int16_t y, uint16_t color) {
-    // //horizontal line
-    if (x0 > x1) _swap(x0, x1);
-    y = abs(y);
 
-    startWrite();
+void TFT_22_ILI9225::drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color) {
 
-    SET_WINDOW_POS(x0, y, x1, y);
-
-    SPI_DC_HIGH();
-    SPI_CS_LOW();
-    x0 = _windowWidth;
-    while (--x0 >= 0) {
-        _spiWrite(color >> 8);
-        _spiWrite(color);
-        INC_CURSOR();
-    }
-    SPI_CS_HIGH();
-
-    endWrite();
-}
-
-
-void TFT_22_ILI9225::drawVLine(int16_t y0, int16_t y1, int16_t x, uint16_t color) {
-    // vertical line
-    if (y0 > y1) _swap(y0, y1);
-    x = abs(x);
-    
-    startWrite();
-
-    SET_WINDOW_POS(x, y0, x, y1);
-
-    SPI_DC_HIGH();
-    SPI_CS_LOW();
-    y0 = _windowHeight;
-    while (--y0 >= 0) {
-        _spiWrite(color >> 8);
-        _spiWrite(color);
-        INC_CURSOR();
-    }
-    SPI_CS_HIGH();
-
-    endWrite();
-}
-
-void TFT_22_ILI9225::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color) {
-
-    int16_t steep = abs(y1 - y0) > abs(x1 - x0);
+    int16_t steep = abs(y2 - y1) > abs(x1 - x1);
     if (steep) {
-        _swap(x0, y0);
         _swap(x1, y1);
+        _swap(x1, y2);
     }
 
-    if (x0 > x1) {
-        _swap(x0, x1);
-        _swap(y0, y1);
+    if (x1 > x1) {
+        _swap(x1, x1);
+        _swap(y1, y2);
     }
 
     int16_t dx, dy;
-    dx = x1 - x0;
-    dy = abs(y1 - y0);
+    dx = x1 - x1;
+    dy = abs(y2 - y1);
 
     int16_t err = dx / 2;
     int16_t ystep;
 
-    if (y0 < y1) {
+    if (y1 < y2) {
         ystep = 1;
     }
     else {
@@ -811,16 +767,16 @@ void TFT_22_ILI9225::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, ui
 
     SET_WINDOW_MAX();
 
-    for (; x0 <= x1; x0++) {
+    for (; x1 <= x1; x1++) {
         if (steep) {
-            _drawPixel(y0, x0, color);
+            _drawPixel(y1, x1, color);
         }
         else {
-            _drawPixel(x0, y0, color);
+            _drawPixel(x1, y1, color);
         }
         err -= dy;
         if (err < 0) {
-            y0 += ystep;
+            y1 += ystep;
             err += dx;
         }
     }
@@ -829,12 +785,58 @@ void TFT_22_ILI9225::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, ui
 }
 
 
-void TFT_22_ILI9225::drawPixel(int16_t x, int16_t y, uint16_t color) {
-    if (x < 0 || y < 0 || x > _windowX1 || y > _windowY1) return;
+void TFT_22_ILI9225::drawHLine(int16_t x1, int16_t x2, int16_t y1, uint16_t color) {
+    // //horizontal line
+    if (x1 > x2) _swap(x1, x2);
+    y1 = abs(y1);
+
+    startWrite();
+
+    SET_WINDOW_POS(x1, y1, x2, y1);
+
+    SPI_DC_HIGH();
+    SPI_CS_LOW();
+    x1 = _windowWidth;
+    while (--x1 >= 0) {
+        _spiWrite(color >> 8);
+        _spiWrite(color);
+        INC_CURSOR();
+    }
+    SPI_CS_HIGH();
+
+    endWrite();
+}
+
+
+void TFT_22_ILI9225::drawVLine(int16_t y1, int16_t y2, int16_t x1, uint16_t color) {
+    // vertical line
+    if (y1 > y2) _swap(y1, y2);
+    x1 = abs(x1);
+    
+    startWrite();
+
+    SET_WINDOW_POS(x1, y1, x1, y2);
+
+    SPI_DC_HIGH();
+    SPI_CS_LOW();
+    y1 = _windowHeight;
+    while (--y1 >= 0) {
+        _spiWrite(color >> 8);
+        _spiWrite(color);
+        INC_CURSOR();
+    }
+    SPI_CS_HIGH();
+
+    endWrite();
+}
+
+
+void TFT_22_ILI9225::drawPixel(int16_t x1, int16_t y1, uint16_t color) {
+    if (x1 < _windowX0 || y1 < _windowY0 || x1 > _windowX1 || y1 > _windowY1) return;
 
     startWrite();
     SET_WINDOW_MAX();
-    _drawPixel(x, y, color);
+    _drawPixel(x1, y1, color);
     endWrite();
 }
 
@@ -845,7 +847,7 @@ uint16_t TFT_22_ILI9225::setColor(uint8_t red8, uint8_t green8, uint8_t blue8) {
 }
 
 
-void TFT_22_ILI9225::splitColor(uint16_t rgb, uint8_t& red, uint8_t& green, uint8_t& blue) {
+void TFT_22_ILI9225::splitColor(uint16_t rgb, uint8_t &red, uint8_t &green, uint8_t &blue) {
     // rgb16 = red5 green6 blue5
     red = (rgb & 0b1111100000000000) >> 11 << 3;
     green = (rgb & 0b0000011111100000) >> 5 << 2;
@@ -853,7 +855,7 @@ void TFT_22_ILI9225::splitColor(uint16_t rgb, uint8_t& red, uint8_t& green, uint
 }
 
 
-void TFT_22_ILI9225::_swap(int16_t& a, int16_t& b) {
+void TFT_22_ILI9225::_swap(int16_t &a, int16_t &b) {
     int16_t w = a;
     a = b;
     b = w;
@@ -972,7 +974,7 @@ void TFT_22_ILI9225::setBackgroundColor(uint16_t color) {
 }
 
 
-void TFT_22_ILI9225::setFont(uint8_t* font) {
+void TFT_22_ILI9225::setFont(uint8_t *font) {
     cfont.font = font;
     cfont.width = readFontByte(0);
     cfont.height = readFontByte(1);
@@ -1001,7 +1003,7 @@ void TFT_22_ILI9225::drawText(int16_t x, int16_t y, String s, uint16_t color) {
 
 #else
 
-int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, char* pStr, uint16_t color, uint8_t strLen) {
+int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, char *pStr, uint16_t color, uint8_t strLen) {
     int16_t currx = x;
 
     startWrite();
@@ -1015,7 +1017,7 @@ int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, char* pStr, uint16_t colo
     return currx - x;
 }
 
-int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, const char* pStr, uint16_t color, uint8_t strLen) {
+int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, const char *pStr, uint16_t color, uint8_t strLen) {
     int16_t currx = x;
 
     startWrite();
@@ -1085,7 +1087,7 @@ int16_t TFT_22_ILI9225::drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t colo
 // provided bitmap buffer (must be PROGMEM memory) using the specified
 // foreground color (unset bits are transparent).
 void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
-                                const uint8_t* bitmap, int16_t w, int16_t h, uint16_t color) {
+                                const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) {
     int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
     uint8_t byte = 0;
 
@@ -1113,7 +1115,7 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 // provided bitmap buffer (must be PROGMEM memory) using the specified
 // foreground (for set bits) and background (for clear bits) colors.
 void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
-                                const uint8_t* bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg) {
+                                const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg) {
     int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
     uint8_t byte = 0;
 
@@ -1145,7 +1147,7 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 
 // drawBitmap() variant for RAM-resident (not PROGMEM) bitmaps.
 void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
-                                uint8_t* bitmap, int16_t w, int16_t h, uint16_t color) {
+                                uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) {
     int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
     uint8_t byte = 0;
 
@@ -1171,7 +1173,7 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 
 // drawBitmap() variant w/background for RAM-resident (not PROGMEM) bitmaps.
 void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
-                                uint8_t* bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg) {
+                                uint8_t *bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg) {
     int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
     uint8_t byte = 0;
 
@@ -1201,7 +1203,7 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 //Usage: Export from GIMP to *.xbm, rename *.xbm to *.c and open in editor.
 //C Array can be directly used with this function
 void TFT_22_ILI9225::drawXBitmap(int16_t x, int16_t y,
-                                 const uint8_t* bitmap, int16_t w, int16_t h, uint16_t color) {
+                                 const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) {
     int16_t i, j, byteWidth = (w + 7) / 8;
     uint8_t byte;
 
@@ -1238,7 +1240,9 @@ void TFT_22_ILI9225::endWrite(void) {
 
 // TEXT- AND CHARACTER-HANDLING FUNCTIONS ----------------------------------
 
-void TFT_22_ILI9225::setGFXFont(const GFXfont* f) { gfxFont = (GFXfont *)f; }
+void TFT_22_ILI9225::setGFXFont(const GFXfont *f) { 
+    gfxFont = (GFXfont *)f; 
+}
 
 
 // Draw a string
@@ -1260,7 +1264,7 @@ void TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, String s, uint16_t color)
 
 #else
 
-int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, char* pString, uint16_t color, uint8_t maxChars) {
+int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, char *pString, uint16_t color, uint8_t maxChars) {
     int16_t currx = x;
 
     if (gfxFont) {
@@ -1275,7 +1279,7 @@ int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, char* pString, uint16_
    return currx-x;
 }
 
-int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, const char* pString, uint16_t color, uint8_t maxChars) {
+int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, const char *pString, uint16_t color, uint8_t maxChars) {
     int16_t currx = x;
 
     if (gfxFont) {
@@ -1298,8 +1302,8 @@ int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, const char* pString, u
 // Draw a character
 int16_t TFT_22_ILI9225::drawGFXChar(int16_t x, int16_t y, unsigned char c, uint16_t color) {
     c -= (uint8_t)pgm_read_byte(&gfxFont->first);
-    GFXglyph* glyph = &(((GFXglyph *)pgm_read_pointer(&gfxFont->glyph))[c]);
-    uint8_t* bitmap = (uint8_t *)pgm_read_pointer(&gfxFont->bitmap);
+    GFXglyph *glyph = &(((GFXglyph *)pgm_read_pointer(&gfxFont->glyph))[c]);
+    uint8_t  *bitmap = (uint8_t *)pgm_read_pointer(&gfxFont->bitmap);
 
     uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
     uint8_t w = pgm_read_byte(&glyph->width),
@@ -1329,12 +1333,12 @@ int16_t TFT_22_ILI9225::drawGFXChar(int16_t x, int16_t y, unsigned char c, uint1
 }
 
 
-void TFT_22_ILI9225::getGFXCharExtent(uint8_t c, int16_t* gw, int16_t* gh, int16_t* xa) {
+void TFT_22_ILI9225::getGFXCharExtent(uint8_t c, int16_t *gw, int16_t *gh, int16_t *xa) {
     uint8_t first = pgm_read_byte(&gfxFont->first),
         last = pgm_read_byte(&gfxFont->last);
     // Char present in this font?
     if ((c >= first) && (c <= last)) {
-        GFXglyph* glyph = &(((GFXglyph *)pgm_read_pointer(&gfxFont->glyph))[c - first]);
+        GFXglyph *glyph = &(((GFXglyph *)pgm_read_pointer(&gfxFont->glyph))[c - first]);
         *gw = pgm_read_byte(&glyph->width);
         *gh = pgm_read_byte(&glyph->height);
         *xa = pgm_read_byte(&glyph->xAdvance);
@@ -1361,7 +1365,7 @@ void TFT_22_ILI9225::getGFXTextExtent(String str, int16_t x, int16_t y, int16_t 
 
 #else
 
-void TFT_22_ILI9225::getGFXTextExtent(char* pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen) {
+void TFT_22_ILI9225::getGFXTextExtent(char *pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen) {
     *w = *h = 0;
     for (uint8_t k = 0; k < strLen && pStr[k]!='\0'; k++) {
         int16_t gw, gh, xa;
@@ -1371,7 +1375,7 @@ void TFT_22_ILI9225::getGFXTextExtent(char* pStr, int16_t x, int16_t y, int16_t 
     }
 }
 
-void TFT_22_ILI9225::getGFXTextExtent(const char* pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen) {
+void TFT_22_ILI9225::getGFXTextExtent(const char *pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen) {
     *w = *h = 0;
     for (uint8_t k = 0; k < strLen; k++) {
         uint8_t c = pgm_read_byte(pStr+k);

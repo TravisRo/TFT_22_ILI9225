@@ -219,8 +219,8 @@ class TFT_22_ILI9225 {
         /// @param    y2 end point coordinate, y-axis
         /// @param    color 16-bit color
         void drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color); 
-        void drawHLine(int16_t x0, int16_t x1, int16_t y, uint16_t color);
-        void drawVLine(int16_t y0, int16_t y1, int16_t x, uint16_t color);
+        void drawHLine(int16_t x1, int16_t x2, int16_t y1, uint16_t color);
+        void drawVLine(int16_t y1, int16_t y2, int16_t x1, uint16_t color);
 
         /// Draw rectangle, rectangle coordinates
         /// @param    x1 top left coordinate, x-axis
@@ -228,7 +228,7 @@ class TFT_22_ILI9225 {
         /// @param    x2 bottom right coordinate, x-axis
         /// @param    y2 bottom right coordinate, y-axis
         /// @param    color 16-bit color
-        void drawRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color); 
+        void drawRectangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color); 
 
         /// Draw solid rectangle, rectangle coordinates
         /// @param    x1 top left coordinate, x-axis
@@ -242,7 +242,7 @@ class TFT_22_ILI9225 {
         /// @param    x1 point coordinate, x-axis
         /// @param    y1 point coordinate, y-axis
         /// @param    color 16-bit color
-        void drawPixel(int16_t x, int16_t y, uint16_t color);  
+        void drawPixel(int16_t x1, int16_t y1, uint16_t color);  
 
 #if TFT_USE_STRING_CLASS == 1
         /// Draw ASCII Text (pixel coordinates)
@@ -259,8 +259,8 @@ class TFT_22_ILI9225 {
         /// @param    color 16-bit color, default=white
         /// @param    strLen [optional] number of chars to draw
         /// @return	  Width of the drawn string
-        int16_t drawText(int16_t x, int16_t y, char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
-        int16_t drawText(int16_t x, int16_t y, const char* pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
+        int16_t drawText(int16_t x, int16_t y, char *pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
+        int16_t drawText(int16_t x, int16_t y, const char *pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
 
 #endif
         /// Calculate 16-bit color from 8-bit Red-Green-Blue components
@@ -299,7 +299,7 @@ class TFT_22_ILI9225 {
 
         /// Set current font
         /// @param    font Font name
-        void setFont(uint8_t* font);
+        void setFont(uint8_t *font);
 
         /// Draw single character (pixel coordinates)
         /// @param    x point coordinate, x-axis
@@ -353,8 +353,8 @@ class TFT_22_ILI9225 {
         /// @param    color 16-bit color, default=white
         /// @param    strLen [optional] number of chars to draw
         /// @return	  Width of the drawn string
-        int16_t drawGFXText(int16_t x, int16_t y, char* pString, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
-        int16_t drawGFXText(int16_t x, int16_t y, const char* pString, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
+        int16_t drawGFXText(int16_t x, int16_t y, char *pString, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
+        int16_t drawGFXText(int16_t x, int16_t y, const char *pString, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
 
         /// Get the width & height of a text string with the current GFX font
         /// @param    pStr Pointer to the string to draw
@@ -363,8 +363,8 @@ class TFT_22_ILI9225 {
         /// @param    w width in pixels of string 
         /// @param    h height in pixels of string
         /// @param    strLen [optional] number of chars to draw
-        void getGFXTextExtent(char* pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
-        void getGFXTextExtent(const char* pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
+        void getGFXTextExtent(char *pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
+        void getGFXTextExtent(const char *pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
 #endif
 
         /// Draw a single character with the current GFX font
