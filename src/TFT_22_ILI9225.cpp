@@ -272,7 +272,7 @@ void TFT_22_ILI9225::begin()
 #endif
 
     // Software SPI
-    if (_clk >= 0) {
+    if(_clk >= 0){
         pinMode(_sdi, OUTPUT);
         digitalWrite(_sdi, LOW);
         pinMode(_clk, OUTPUT);
@@ -298,7 +298,7 @@ void TFT_22_ILI9225::begin()
     // Initialization Code
     if (_rst > 0) {
         digitalWrite(_rst, HIGH); // Pull the reset pin high to release the ILI9225C from the reset status
-        delay(1);
+        delay(1); 
         digitalWrite(_rst, LOW); // Pull the reset pin low to reset ILI9225
         delay(10);
         digitalWrite(_rst, HIGH); // Pull the reset pin high to release the ILI9225C from the reset status
@@ -315,7 +315,7 @@ void TFT_22_ILI9225::begin()
     _writeRegister(ILI9225_POWER_CTRL4, 0x0000); // Set GVDD
     _writeRegister(ILI9225_POWER_CTRL5, 0x0000); // Set VCOMH/VCOML voltage
     endWrite();
-    delay(40);
+    delay(40); 
 
     // Power-on sequence
     startWrite();
@@ -345,32 +345,32 @@ void TFT_22_ILI9225::begin()
     _writeRegister(ILI9225_RAM_ADDR_SET2, 0x0000); // RAM Address
 
     /* Set GRAM area */
-    _writeRegister(ILI9225_GATE_SCAN_CTRL, 0x0000);
-    _writeRegister(ILI9225_VERTICAL_SCROLL_CTRL1, 0x00DB);
-    _writeRegister(ILI9225_VERTICAL_SCROLL_CTRL2, 0x0000);
-    _writeRegister(ILI9225_VERTICAL_SCROLL_CTRL3, 0x0000);
-    _writeRegister(ILI9225_PARTIAL_DRIVING_POS1, 0x00DB);
-    _writeRegister(ILI9225_PARTIAL_DRIVING_POS2, 0x0000);
-    _writeRegister(ILI9225_HORIZONTAL_WINDOW_ADDR1, 0x00AF);
-    _writeRegister(ILI9225_HORIZONTAL_WINDOW_ADDR2, 0x0000);
-    _writeRegister(ILI9225_VERTICAL_WINDOW_ADDR1, 0x00DB);
-    _writeRegister(ILI9225_VERTICAL_WINDOW_ADDR2, 0x0000);
+    _writeRegister(ILI9225_GATE_SCAN_CTRL, 0x0000); 
+    _writeRegister(ILI9225_VERTICAL_SCROLL_CTRL1, 0x00DB); 
+    _writeRegister(ILI9225_VERTICAL_SCROLL_CTRL2, 0x0000); 
+    _writeRegister(ILI9225_VERTICAL_SCROLL_CTRL3, 0x0000); 
+    _writeRegister(ILI9225_PARTIAL_DRIVING_POS1, 0x00DB); 
+    _writeRegister(ILI9225_PARTIAL_DRIVING_POS2, 0x0000); 
+    _writeRegister(ILI9225_HORIZONTAL_WINDOW_ADDR1, 0x00AF); 
+    _writeRegister(ILI9225_HORIZONTAL_WINDOW_ADDR2, 0x0000); 
+    _writeRegister(ILI9225_VERTICAL_WINDOW_ADDR1, 0x00DB); 
+    _writeRegister(ILI9225_VERTICAL_WINDOW_ADDR2, 0x0000); 
 
     /* Set GAMMA curve */
-    _writeRegister(ILI9225_GAMMA_CTRL1, 0x0000);
-    _writeRegister(ILI9225_GAMMA_CTRL2, 0x0808);
-    _writeRegister(ILI9225_GAMMA_CTRL3, 0x080A);
-    _writeRegister(ILI9225_GAMMA_CTRL4, 0x000A);
-    _writeRegister(ILI9225_GAMMA_CTRL5, 0x0A08);
-    _writeRegister(ILI9225_GAMMA_CTRL6, 0x0808);
-    _writeRegister(ILI9225_GAMMA_CTRL7, 0x0000);
-    _writeRegister(ILI9225_GAMMA_CTRL8, 0x0A00);
-    _writeRegister(ILI9225_GAMMA_CTRL9, 0x0710);
-    _writeRegister(ILI9225_GAMMA_CTRL10, 0x0710);
+    _writeRegister(ILI9225_GAMMA_CTRL1, 0x0000); 
+    _writeRegister(ILI9225_GAMMA_CTRL2, 0x0808); 
+    _writeRegister(ILI9225_GAMMA_CTRL3, 0x080A); 
+    _writeRegister(ILI9225_GAMMA_CTRL4, 0x000A); 
+    _writeRegister(ILI9225_GAMMA_CTRL5, 0x0A08); 
+    _writeRegister(ILI9225_GAMMA_CTRL6, 0x0808); 
+    _writeRegister(ILI9225_GAMMA_CTRL7, 0x0000); 
+    _writeRegister(ILI9225_GAMMA_CTRL8, 0x0A00); 
+    _writeRegister(ILI9225_GAMMA_CTRL9, 0x0710); 
+    _writeRegister(ILI9225_GAMMA_CTRL10, 0x0710); 
 
-    _writeRegister(ILI9225_DISP_CTRL1, 0x0012);
+    _writeRegister(ILI9225_DISP_CTRL1, 0x0012); 
     endWrite();
-    delay(50);
+    delay(50); 
     startWrite();
     _writeRegister(ILI9225_DISP_CTRL1, 0x1017);
     endWrite();
@@ -380,20 +380,20 @@ void TFT_22_ILI9225::begin()
     setOrientation(0);
 
     // Initialize variables
-    setBackgroundColor(COLOR_BLACK);
+    setBackgroundColor( COLOR_BLACK );
 
     clear();
 }
 
 
 void TFT_22_ILI9225::_spiWrite(uint8_t b) {
-    if (_clk < 0) {
+    if(_clk < 0){
         HSPI_WRITE(b);
         return;
     }
     // Fast SPI bitbang swiped from LPD8806 library
-    for (uint8_t bit = 0x80; bit; bit >>= 1) {
-        if ((b) & bit) {
+    for(uint8_t bit = 0x80; bit; bit >>= 1){
+        if((b) & bit){
             SSPI_MOSI_HIGH();
         } else {
             SSPI_MOSI_LOW();
@@ -575,7 +575,7 @@ void TFT_22_ILI9225::setOrientation(uint8_t orientation, bool mirror ) {
 }
 
 
-uint8_t TFT_22_ILI9225::getOrientation() { 
+uint8_t TFT_22_ILI9225::getOrientation() {
     return _orientation;
 }
 
@@ -626,7 +626,7 @@ void TFT_22_ILI9225::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t colo
     _drawPixel(x0 + r, y0, color);
     _drawPixel(x0 - r, y0, color);
 
-    while (x < y) {
+    while (x<y) {
         if (f >= 0) {
             y--;
             ddF_y += 2;
@@ -657,7 +657,7 @@ void TFT_22_ILI9225::fillCircle(int16_t x0, int16_t y0, int16_t radius, uint16_t
     int16_t y = radius;
 
     startWrite();
-    while (x < y) {
+    while (x<y) {
         if (f >= 0) {
             y--;
             ddF_y += 2;
@@ -707,13 +707,10 @@ void TFT_22_ILI9225::drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, ui
 
     SET_WINDOW_MAX();
 
-    for (; x1 <= x2; x1++) {
-        if (steep) {
-            _drawPixel(y1, x1, color);
-        }
-        else {
-            _drawPixel(x1, y1, color);
-        }
+    for (; x1<=x2; x1++) {
+        if (steep) _drawPixel(y1, x1, color);
+        else       _drawPixel(x1, y1, color);
+
         err -= dy;
         if (err < 0) {
             y1 += ystep;
@@ -976,56 +973,48 @@ int16_t TFT_22_ILI9225::drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t colo
     return charWidth;
 }
 
-
 // Draw a 1-bit image (bitmap) at the specified (x,y) position from the
 // provided bitmap buffer (must be PROGMEM memory) using the specified
 // foreground color (unset bits are transparent).
 void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
-                                const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) {
-    int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
+const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) {
+
+    int16_t i, j, byteWidth = (w + 7) / 8;
     uint8_t byte = 0;
 
     startWrite();
     SET_WINDOW_WH(x, y, w, h);
 
-    for (int16_t j = 0; j < _windowHeight; j++, y++) {
-        for (int16_t i = 0; i < _windowWidth; i++) {
-            if (i & 7)
-                byte <<= 1;
-            else
-                byte = pgm_read_byte(&bitmap[j * byteWidth + i / 8]);
-            if (byte & 0x80)
-            {
-                _drawPixel(x + i, y, color);
-            }
+    for (j = 0; j < _windowHeight; j++) {
+        for (i = 0; i < _windowWidth; i++) {
+            if (i & 7) byte <<= 1;
+            else       byte   = pgm_read_byte(bitmap + j * byteWidth + i / 8);
+            if (byte & 0x80) _drawPixel(x + i, y + j, color);
         }
     }
 
     endWrite();
 }
 
-
 // Draw a 1-bit image (bitmap) at the specified (x,y) position from the
 // provided bitmap buffer (must be PROGMEM memory) using the specified
 // foreground (for set bits) and background (for clear bits) colors.
 void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
-                                const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg) {
-    int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
-    uint8_t byte = 0;
+const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg) {
+
+    int16_t i, j, byteWidth = (w + 7) / 8;
+    uint8_t byte;
 
     startWrite();
     SET_WINDOW_WH(x, y, w, h);
     SPI_DC_HIGH();
     SPI_CS_LOW();
 
-    for (int16_t j = 0; j < _windowHeight; j++, y++) {
-        for (int16_t i = 0; i < _windowWidth; i++) {
-            if (i & 7)
-                byte <<= 1;
-            else
-                byte = pgm_read_byte(&bitmap[j * byteWidth + i / 8]);
-            if (byte & 0x80)
-            {
+    for (j = 0; j < _windowHeight; j++) {
+        for (i = 0; i < _windowWidth; i++) {
+            if (i & 7) byte <<= 1;
+            else       byte   = pgm_read_byte(bitmap + j * byteWidth + i / 8);
+            if (byte & 0x80) {
                 _spiWrite(color >> 8);
                 _spiWrite(color);
             } else {
@@ -1041,23 +1030,19 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 
 // drawBitmap() variant for RAM-resident (not PROGMEM) bitmaps.
 void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
-                                uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) {
-    int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
-    uint8_t byte = 0;
+uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) {
+
+    int16_t i, j, byteWidth = (w + 7) / 8;
+    uint8_t byte;
 
     startWrite();
     SET_WINDOW_WH(x, y, w, h);
 
-    for (int16_t j = 0; j < _windowHeight; j++, y++) {
-        for (int16_t i = 0; i < _windowWidth; i++) {
-            if (i & 7)
-                byte <<= 1;
-            else
-                byte = bitmap[j * byteWidth + i / 8];
-            if (byte & 0x80)
-            {
-                _drawPixel(x + i, y, color);
-            }
+    for (j = 0; j < _windowHeight; j++) {
+        for (i = 0; i < _windowWidth; i++) {
+            if (i & 7) byte <<= 1;
+            else       byte = bitmap[j * byteWidth + i / 8];
+            if (byte & 0x80) _drawPixel(x + i, y + j, color);
         }
     }
 
@@ -1067,25 +1052,26 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 
 // drawBitmap() variant w/background for RAM-resident (not PROGMEM) bitmaps.
 void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
-                                uint8_t *bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg) {
-    int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
-    uint8_t byte = 0;
+uint8_t *bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg) {
+
+    int16_t i, j, byteWidth = (w + 7) / 8;
+    uint8_t byte;
 
     startWrite();
     SET_WINDOW_WH(x, y, w, h);
 
-    for (int16_t j = 0; j < _windowHeight; j++, y++) {
-        for (int16_t i = 0; i < _windowWidth; i++) {
-            if (i & 7)
-                byte <<= 1;
-            else
-                byte = bitmap[j * byteWidth + i / 8];
-            if (byte & 0x80)
-            {
-                _writeData(color >> 8, color);
+    for (j = 0; j < _windowHeight; j++) {
+        for (i = 0; i < _windowWidth; i++) {
+            if (i & 7) byte <<= 1;
+            else       byte = bitmap[j * byteWidth + i / 8];
+            if (byte & 0x80) {
+                _spiWrite(color >> 8);
+                _spiWrite(color);
             } else {
-                _writeData(bg >> 8, bg);
+                _spiWrite(bg >> 8);
+                _spiWrite(bg);
             }
+
         }
     }
 
@@ -1097,20 +1083,19 @@ void TFT_22_ILI9225::drawBitmap(int16_t x, int16_t y,
 //Usage: Export from GIMP to *.xbm, rename *.xbm to *.c and open in editor.
 //C Array can be directly used with this function
 void TFT_22_ILI9225::drawXBitmap(int16_t x, int16_t y,
-                                 const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) {
+const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) {
+
     int16_t i, j, byteWidth = (w + 7) / 8;
     uint8_t byte;
 
     startWrite();
     SET_WINDOW_WH(x, y, w, h);
 
-    for (int16_t j = 0; j < _windowHeight; j++, y++) {
-        for (int16_t i = 0; i < _windowWidth; i++) {
+    for (j = 0; j < _windowHeight; j++) {
+        for (i = 0; i < _windowWidth; i++) {
             if (i & 7) byte >>= 1;
-            else byte = pgm_read_byte(bitmap + j * byteWidth + i / 8);
-            if (byte & 0x01) {
-                _drawPixel(x + i, y, color);
-            }
+            else       byte   = pgm_read_byte(bitmap + j * byteWidth + i / 8);
+            if (byte & 0x01) _drawPixel(x + i, y, color);
         }
     }
     endWrite();
@@ -1134,8 +1119,8 @@ void TFT_22_ILI9225::endWrite(void) {
 
 // TEXT- AND CHARACTER-HANDLING FUNCTIONS ----------------------------------
 
-void TFT_22_ILI9225::setGFXFont(const GFXfont *f) { 
-    gfxFont = (GFXfont *)f; 
+void TFT_22_ILI9225::setGFXFont(const GFXfont *f) {
+    gfxFont = (GFXfont *)f;
 }
 
 
@@ -1192,29 +1177,28 @@ int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, const char *pString, u
 
 #endif
 
-
 // Draw a character
 int16_t TFT_22_ILI9225::drawGFXChar(int16_t x, int16_t y, unsigned char c, uint16_t color) {
+
     c -= (uint8_t)pgm_read_byte(&gfxFont->first);
-    GFXglyph *glyph = &(((GFXglyph *)pgm_read_pointer(&gfxFont->glyph))[c]);
+    GFXglyph *glyph  = &(((GFXglyph *)pgm_read_pointer(&gfxFont->glyph))[c]);
     uint8_t  *bitmap = (uint8_t *)pgm_read_pointer(&gfxFont->bitmap);
 
     uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
-    uint8_t w = pgm_read_byte(&glyph->width),
-        h = pgm_read_byte(&glyph->height),
-        xa = pgm_read_byte(&glyph->xAdvance);
-    int8_t xo = pgm_read_byte(&glyph->xOffset),
-        yo = pgm_read_byte(&glyph->yOffset);
-    int16_t xx, yy;
-    uint8_t bits = 0, bit = 0;
+    uint8_t  w  = pgm_read_byte(&glyph->width),
+             h  = pgm_read_byte(&glyph->height),
+             xa = pgm_read_byte(&glyph->xAdvance);
+    int8_t   xo = pgm_read_byte(&glyph->xOffset),
+             yo = pgm_read_byte(&glyph->yOffset);
+    uint8_t  xx, yy, bits = 0, bit = 0;
 
     // NOTE: Char is clipped to the available window area
 
     startWrite();
     SET_WINDOW_WH(x + xo, y + yo, w, h);
-    for (yy = 0; yy < h; yy++) {
-        for (xx = 0; xx < w; xx++) {
-            if (!(bit++ & 7)) { 
+    for (yy=0; yy<h; yy++) {
+        for (xx=0; xx<w; xx++) {
+            if(!(bit++ & 7)) { 
                 bits = pgm_read_byte(&bitmap[bo++]);
             }
             if (bits & 0x80) {
@@ -1231,9 +1215,9 @@ int16_t TFT_22_ILI9225::drawGFXChar(int16_t x, int16_t y, unsigned char c, uint1
 
 void TFT_22_ILI9225::getGFXCharExtent(uint8_t c, int16_t *gw, int16_t *gh, int16_t *xa) {
     uint8_t first = pgm_read_byte(&gfxFont->first),
-        last = pgm_read_byte(&gfxFont->last);
+            last  = pgm_read_byte(&gfxFont->last);
     // Char present in this font?
-    if ((c >= first) && (c <= last)) {
+    if((c >= first) && (c <= last)) {
         GFXglyph *glyph = &(((GFXglyph *)pgm_read_pointer(&gfxFont->glyph))[c - first]);
         *gw = pgm_read_byte(&glyph->width);
         *gh = pgm_read_byte(&glyph->height);
