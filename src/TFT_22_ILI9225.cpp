@@ -1214,10 +1214,12 @@ int16_t TFT_22_ILI9225::drawGFXChar(int16_t x, int16_t y, unsigned char c, uint1
     SET_WINDOW_WH(x + xo, y + yo, w, h);
     for (yy = 0; yy < h; yy++) {
         for (xx = 0; xx < w; xx++) {
-            if (!(bit++ & 7)) { bits = pgm_read_byte(&bitmap[bo++]); }
+            if (!(bit++ & 7)) { 
+                bits = pgm_read_byte(&bitmap[bo++]);
+            }
             if (bits & 0x80) {
                 _drawPixel(x + xo + xx, y + yo + yy, color);
-            } 
+            }
             bits <<= 1;
         }
     }
