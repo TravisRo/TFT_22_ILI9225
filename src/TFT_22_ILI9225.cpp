@@ -451,67 +451,6 @@ void TFT_22_ILI9225::_setWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1) 
 }
 
 
-void TFT_22_ILI9225::_setCursor(int16_t x0, int16_t y0)
-{
-    if (cursor_x != x0 || cursor_y != y0)
-    {
-        _writeRegister(ramAddrOne, x0);
-        _writeRegister(ramAddrTwo, y0);
-        cursor_x = x0;
-        cursor_y = y0;
-        _writeCommand(0x00, ILI9225_GRAM_DATA_REG);
-    }
-}
-
-
-void TFT_22_ILI9225::_drawPixel(int16_t x, int16_t y, uint16_t color) {
-    if (x < 0 || y < 0 || x > _windowX1 || y > _windowY1) return;
-
-    _setCursor(x, y);
-    SPI_DC_HIGH();
-    SPI_CS_LOW();
-    _spiWrite(color >> 8);
-    _spiWrite(color);
-    SPI_CS_HIGH();
-
-    INC_CURSOR();
-}
-
-
-void TFT_22_ILI9225::_pushEntryModeVH() {
-    if (++entryModeVHCnt == 1) {
-        switch (_orientation)
-        {
-    case 1:
-    case 3:
-        _writeRegister(ILI9225_ENTRY_MODE, 0x1030);
-        break;
-    default: 
-        _writeRegister(ILI9225_ENTRY_MODE, 0x1038);
-        break;
-
-        }
-    }	
-}
-
-
-void TFT_22_ILI9225::_popEntryModeVH() {
-    if (--entryModeVHCnt == 0) {
-        switch (_orientation)
-        {
-    case 1:
-    case 3:
-        _writeRegister(ILI9225_ENTRY_MODE, 0x1038);
-        break;
-    default: 
-        _writeRegister(ILI9225_ENTRY_MODE, 0x1030);
-        break;
-
-        }
-    }	
-}
-
-
 void TFT_22_ILI9225::clear(uint16_t fillColor) {
     fillRectangle(0, 0, _width - 1, _height - 1, fillColor);
 }
@@ -784,53 +723,8 @@ void TFT_22_ILI9225::drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, ui
 }
 
 
-void TFT_22_ILI9225::drawHLine(int16_t x1, int16_t x2, int16_t y1, uint16_t color) {
-    // //horizontal line
-    if (x1 > x2) _swap(x1, x2);
-    y1 = abs(y1);
-
-    startWrite();
-
-    SET_WINDOW_POS(x1, y1, x2, y1);
-
-    SPI_DC_HIGH();
-    SPI_CS_LOW();
-    x1 = _windowWidth;
-    while (--x1 >= 0) {
-        _spiWrite(color >> 8);
-        _spiWrite(color);
-        INC_CURSOR();
-    }
-    SPI_CS_HIGH();
-
-    endWrite();
-}
-
-
-void TFT_22_ILI9225::drawVLine(int16_t y1, int16_t y2, int16_t x1, uint16_t color) {
-    // vertical line
-    if (y1 > y2) _swap(y1, y2);
-    x1 = abs(x1);
-    
-    startWrite();
-
-    SET_WINDOW_POS(x1, y1, x1, y2);
-
-    SPI_DC_HIGH();
-    SPI_CS_LOW();
-    y1 = _windowHeight;
-    while (--y1 >= 0) {
-        _spiWrite(color >> 8);
-        _spiWrite(color);
-        INC_CURSOR();
-    }
-    SPI_CS_HIGH();
-
-    endWrite();
-}
-
-
 void TFT_22_ILI9225::drawPixel(int16_t x1, int16_t y1, uint16_t color) {
+ 
     if (x1 < _windowX0 || y1 < _windowY0 || x1 > _windowX1 || y1 > _windowY1) return;
 
     startWrite();
@@ -1387,3 +1281,109 @@ void TFT_22_ILI9225::getGFXTextExtent(const char *pStr, int16_t x, int16_t y, in
 }
 
 #endif
+
+
+void TFT_22_ILI9225::_setCursor(int16_t x0, int16_t y0) {
+    if (cursor_x != x0 || cursor_y != y0)
+    {
+        _writeRegister(ramAddrOne, x0);
+        _writeRegister(ramAddrTwo, y0);
+        cursor_x = x0;
+        cursor_y = y0;
+        _writeCommand(0x00, ILI9225_GRAM_DATA_REG);
+    }
+}
+
+
+void TFT_22_ILI9225::_drawPixel(int16_t x, int16_t y, uint16_t color) {
+    if (x < 0 || y < 0 || x > _windowX1 || y > _windowY1) return;
+
+    _setCursor(x, y);
+    SPI_DC_HIGH();
+    SPI_CS_LOW();
+    _spiWrite(color >> 8);
+    _spiWrite(color);
+    SPI_CS_HIGH();
+
+    INC_CURSOR();
+}
+
+
+void TFT_22_ILI9225::_pushEntryModeVH() {
+    if (++entryModeVHCnt == 1) {
+        switch (_orientation)
+        {
+    case 1:
+    case 3:
+        _writeRegister(ILI9225_ENTRY_MODE, 0x1030);
+        break;
+    default: 
+        _writeRegister(ILI9225_ENTRY_MODE, 0x1038);
+        break;
+
+        }
+    }	
+}
+
+
+void TFT_22_ILI9225::_popEntryModeVH() {
+    if (--entryModeVHCnt == 0) {
+        switch (_orientation)
+        {
+    case 1:
+    case 3:
+        _writeRegister(ILI9225_ENTRY_MODE, 0x1038);
+        break;
+    default: 
+        _writeRegister(ILI9225_ENTRY_MODE, 0x1030);
+        break;
+
+        }
+    }	
+}
+
+
+void TFT_22_ILI9225::drawHLine(int16_t x1, int16_t x2, int16_t y1, uint16_t color) {
+    // //horizontal line
+    if (x1 > x2) _swap(x1, x2);
+    y1 = abs(y1);
+
+    startWrite();
+
+    SET_WINDOW_POS(x1, y1, x2, y1);
+
+    SPI_DC_HIGH();
+    SPI_CS_LOW();
+    x1 = _windowWidth;
+    while (--x1 >= 0) {
+        _spiWrite(color >> 8);
+        _spiWrite(color);
+        INC_CURSOR();
+    }
+    SPI_CS_HIGH();
+
+    endWrite();
+}
+
+
+void TFT_22_ILI9225::drawVLine(int16_t y1, int16_t y2, int16_t x1, uint16_t color) {
+    // vertical line
+    if (y1 > y2) _swap(y1, y2);
+    x1 = abs(x1);
+    
+    startWrite();
+
+    SET_WINDOW_POS(x1, y1, x1, y2);
+
+    SPI_DC_HIGH();
+    SPI_CS_LOW();
+    y1 = _windowHeight;
+    while (--y1 >= 0) {
+        _spiWrite(color >> 8);
+        _spiWrite(color);
+        INC_CURSOR();
+    }
+    SPI_CS_HIGH();
+
+    endWrite();
+}
