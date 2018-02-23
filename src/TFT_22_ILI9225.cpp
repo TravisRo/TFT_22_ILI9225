@@ -738,36 +738,35 @@ void TFT_22_ILI9225::fillCircle(int16_t x0, int16_t y0, int16_t radius, uint16_t
 
 void TFT_22_ILI9225::drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color) {
 
-    int16_t steep = abs(y2 - y1) > abs(x1 - x1);
+    // Classic Bresenham algorithm
+    int16_t steep = abs((int16_t)(y2 - y1)) > abs((int16_t)(x2 - x1));
+
+    int16_t dx, dy;
+
     if (steep) {
         _swap(x1, y1);
-        _swap(x1, y2);
+        _swap(x2, y2);
     }
 
-    if (x1 > x1) {
-        _swap(x1, x1);
+    if (x1 > x2) {
+        _swap(x1, x2);
         _swap(y1, y2);
     }
 
-    int16_t dx, dy;
-    dx = x1 - x1;
-    dy = abs(y2 - y1);
+    dx = x2 - x1;
+    dy = abs((int16_t)(y2 - y1));
 
     int16_t err = dx / 2;
     int16_t ystep;
 
-    if (y1 < y2) {
-        ystep = 1;
-    }
-    else {
-        ystep = -1;
-    }
+    if (y1 < y2) ystep = 1;
+    else ystep = -1;
 
     startWrite();
 
     SET_WINDOW_MAX();
 
-    for (; x1 <= x1; x1++) {
+    for (; x1 <= x2; x1++) {
         if (steep) {
             _drawPixel(y1, x1, color);
         }
