@@ -322,9 +322,8 @@ class TFT_22_ILI9225 {
         /// Draw a string with the current GFX font
         /// @param    x point coordinate, x-axis
         /// @param    y point coordinate, y-axis
-        /// @param    string to draw
+        /// @param    s string to print
         /// @param    color 16-bit color, default=white
-        /// @param    strLen [optional] number of chars to draw
         void drawGFXText(int16_t x, int16_t y, String s, uint16_t color = COLOR_WHITE);
 
         /// Get the width & height of a text string with the current GFX font
