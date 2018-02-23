@@ -5,7 +5,7 @@ TFT_22_ILI9225
 * Header DEFINE to disable string class
 * Added fontX() and fontY() (previously commented out)
 * Huge performance gains
-** Functions optimized with the ILI9225 window command
+**Functions optimized with the ILI9225 window command**
 
 **v1.3.4, released 2017-11-27, add support for ESP32**
 
