@@ -4,6 +4,7 @@ TFT_22_ILI9225
 * Hardware orientation support
 * Header DEFINE to disable string class
 * Added fontX() and fontY() (previously commented out)
+* Added support for out of bounds draw operations (clipping)
 * Huge performance gains
 **Functions optimized with the ILI9225 window command**
 
