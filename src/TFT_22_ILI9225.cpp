@@ -733,6 +733,16 @@ void TFT_22_ILI9225::drawPixel(int16_t x1, int16_t y1, uint16_t color) {
 }
 
 
+uint16_t TFT_22_ILI9225::maxX() {
+    return _width;
+}
+
+
+uint16_t TFT_22_ILI9225::maxY() {
+    return _height;
+}
+
+
 uint16_t TFT_22_ILI9225::setColor(uint8_t red8, uint8_t green8, uint8_t blue8) {
     // rgb16 = red5 green6 blue5
     return (red8 >> 3) << 11 | (green8 >> 2) << 5 | (blue8 >> 3);
@@ -877,7 +887,6 @@ void TFT_22_ILI9225::setFont(uint8_t* font) {
 }
 
 #if TFT_USE_STRING_CLASS == 1
-
 void TFT_22_ILI9225::drawText(int16_t x, int16_t y, String s, uint16_t color) {
 
     int16_t currx = x;
@@ -891,39 +900,6 @@ void TFT_22_ILI9225::drawText(int16_t x, int16_t y, String s, uint16_t color) {
     _popEntryModeVH();
     endWrite();
 }
-
-#else
-
-int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, char *pStr, uint16_t color, uint8_t strLen) {
-    int16_t currx = x;
-
-    startWrite();
-    _pushEntryModeVH();
-    // Print every character in string
-    for (uint8_t k = 0; pStr[k] != '\0' && k < strLen; k++) {
-        currx += drawChar(currx, y, pStr[k], color) + 1;
-    }
-    _popEntryModeVH();
-    endWrite();
-    return currx - x;
-}
-
-int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, const char *pStr, uint16_t color, uint8_t strLen) {
-    int16_t currx = x;
-
-    startWrite();
-    _pushEntryModeVH();
-    // Print every character in string
-    for (uint8_t k = 0; k < strLen; k++) {
-        uint8_t c = pgm_read_byte(pStr + k);
-        if (c == 0) break;
-        currx += drawChar(currx, y, c, color) + 1;
-    }
-    _popEntryModeVH();
-    endWrite();
-    return currx;
-}
-
 #endif
 
 int16_t TFT_22_ILI9225::drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t color) {
@@ -1123,10 +1099,8 @@ void TFT_22_ILI9225::setGFXFont(const GFXfont *f) {
     gfxFont = (GFXfont *)f;
 }
 
-
-// Draw a string
 #if TFT_USE_STRING_CLASS == 1
-
+// Draw a string
 void TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, String s, uint16_t color) {
 
     int16_t currx = x;
@@ -1140,41 +1114,6 @@ void TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, String s, uint16_t color)
         endWrite();
     }
 }
-
-#else
-
-int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, char *pString, uint16_t color, uint8_t maxChars) {
-    int16_t currx = x;
-
-    if (gfxFont) {
-        startWrite();
-        // Print every character in string
-        for (uint8_t k = 0; pString[k]!='\0' && k < maxChars; k++) {
-            currx += drawGFXChar(currx, y, pString[k], color) + 1;
-        }
-        endWrite();
-    }
-
-   return currx-x;
-}
-
-int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, const char *pString, uint16_t color, uint8_t maxChars) {
-    int16_t currx = x;
-
-    if (gfxFont) {
-        startWrite();
-        // Print every character in string
-        for (uint8_t k = 0; k < maxChars; k++) {
-            uint8_t c = pgm_read_byte(pString + k);
-            if (c == 0) break;
-            currx += drawGFXChar(currx, y, c, color) + 1;
-        }
-        endWrite();
-    }
-
-   return currx-x;
-}
-
 #endif
 
 // Draw a character
@@ -1229,7 +1168,6 @@ void TFT_22_ILI9225::getGFXCharExtent(uint8_t c, int16_t *gw, int16_t *gh, int16
 
 
 #if TFT_USE_STRING_CLASS == 1
-
 void TFT_22_ILI9225::getGFXTextExtent(String str, int16_t x, int16_t y, int16_t *w, int16_t *h) {
     *w  = *h = 0;
     for (uint8_t k = 0; k < str.length(); k++) {
@@ -1242,33 +1180,7 @@ void TFT_22_ILI9225::getGFXTextExtent(String str, int16_t x, int16_t y, int16_t 
         *w += xa;
     }
 }
-
-#else
-
-void TFT_22_ILI9225::getGFXTextExtent(char *pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen) {
-    *w = *h = 0;
-    for (uint8_t k = 0; k < strLen && pStr[k]!='\0'; k++) {
-        int16_t gw, gh, xa;
-        getGFXCharExtent(pStr[k], &gw, &gh, &xa);
-        if (gh > *h) { *h = gh; }
-        *w += xa;
-    }
-}
-
-void TFT_22_ILI9225::getGFXTextExtent(const char *pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen) {
-    *w = *h = 0;
-    for (uint8_t k = 0; k < strLen; k++) {
-        uint8_t c = pgm_read_byte(pStr+k);
-        int16_t gw, gh, xa;
-        if (c == 0) break;
-        getGFXCharExtent(c, &gw, &gh, &xa);
-        if (gh > *h) { *h = gh; }
-        *w += xa;
-    }
-}
-
 #endif
-
 
 void TFT_22_ILI9225::_setCursor(int16_t x0, int16_t y0) {
     if (cursor_x != x0 || cursor_y != y0)
@@ -1374,3 +1286,93 @@ void TFT_22_ILI9225::drawVLine(int16_t y1, int16_t y2, int16_t x1, uint16_t colo
 
     endWrite();
 }
+
+#if TFT_USE_STRING_CLASS == 0
+int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, char *pStr, uint16_t color, uint8_t strLen) {
+    int16_t currx = x;
+
+    startWrite();
+    _pushEntryModeVH();
+    // Print every character in string
+    for (uint8_t k = 0; pStr[k] != '\0' && k < strLen; k++) {
+        currx += drawChar(currx, y, pStr[k], color) + 1;
+    }
+    _popEntryModeVH();
+    endWrite();
+    return currx - x;
+}
+
+
+int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, const char *pStr, uint16_t color, uint8_t strLen) {
+    int16_t currx = x;
+
+    startWrite();
+    _pushEntryModeVH();
+    // Print every character in string
+    for (uint8_t k = 0; k < strLen; k++) {
+        uint8_t c = pgm_read_byte(pStr + k);
+        if (c == 0) break;
+        currx += drawChar(currx, y, c, color) + 1;
+    }
+    _popEntryModeVH();
+    endWrite();
+    return currx;
+}
+
+
+int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, char *pString, uint16_t color, uint8_t maxChars) {
+    int16_t currx = x;
+
+    if (gfxFont) {
+        startWrite();
+        // Print every character in string
+        for (uint8_t k = 0; pString[k]!='\0' && k < maxChars; k++) {
+            currx += drawGFXChar(currx, y, pString[k], color) + 1;
+        }
+        endWrite();
+    }
+
+   return currx-x;
+}
+
+int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, const char *pString, uint16_t color, uint8_t maxChars) {
+    int16_t currx = x;
+
+    if (gfxFont) {
+        startWrite();
+        // Print every character in string
+        for (uint8_t k = 0; k < maxChars; k++) {
+            uint8_t c = pgm_read_byte(pString + k);
+            if (c == 0) break;
+            currx += drawGFXChar(currx, y, c, color) + 1;
+        }
+        endWrite();
+    }
+
+   return currx-x;
+}
+
+
+void TFT_22_ILI9225::getGFXTextExtent(char *pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen) {
+    *w = *h = 0;
+    for (uint8_t k = 0; k < strLen && pStr[k]!='\0'; k++) {
+        int16_t gw, gh, xa;
+        getGFXCharExtent(pStr[k], &gw, &gh, &xa);
+        if (gh > *h) { *h = gh; }
+        *w += xa;
+    }
+}
+
+
+void TFT_22_ILI9225::getGFXTextExtent(const char *pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen) {
+    *w = *h = 0;
+    for (uint8_t k = 0; k < strLen; k++) {
+        uint8_t c = pgm_read_byte(pStr+k);
+        int16_t gw, gh, xa;
+        if (c == 0) break;
+        getGFXCharExtent(c, &gw, &gh, &xa);
+        if (gh > *h) { *h = gh; }
+        *w += xa;
+    }
+}
+#endif
