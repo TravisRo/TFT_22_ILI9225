@@ -895,7 +895,7 @@ void TFT_22_ILI9225::drawText(int16_t x, int16_t y, String s, uint16_t color) {
     _pushEntryModeVH();
     // Print every character in string
     for (uint8_t k = 0; k < s.length(); k++) {
-        currx += drawChar(currx, y, s.charAt(k), color) + 1;
+        currx += drawChar(currx, y, s.charAt(k), color);
     }
     _popEntryModeVH();
     endWrite();
@@ -946,7 +946,7 @@ int16_t TFT_22_ILI9225::drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t colo
     _popEntryModeVH();
     endWrite();
 
-    return charWidth;
+    return _windowX1 - _windowX0 + 1;
 }
 
 // Draw a 1-bit image (bitmap) at the specified (x,y) position from the
@@ -1289,22 +1289,31 @@ void TFT_22_ILI9225::drawVLine(int16_t y1, int16_t y2, int16_t x1, uint16_t colo
 
 #if TFT_USE_STRING_CLASS == 0
 int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, char *pStr, uint16_t color, uint8_t strLen) {
-    int16_t currx = x;
+
+    int16_t textWidth = 0;
 
     startWrite();
     _pushEntryModeVH();
     // Print every character in string
-    for (uint8_t k = 0; pStr[k] != '\0' && k < strLen; k++) {
-        currx += drawChar(currx, y, pStr[k], color) + 1;
+    for (uint8_t k = 0; k < strLen; k++) {
+        uint8_t c = pStr[k];
+        if (c == 0) break;
+        if (textWidth + x >=_width) break;
+        if (textWidth + x + fontX() < 0) {
+            x+= fontX() + 1;
+            continue;
+        }
+        textWidth+=drawChar(textWidth+x, y, pStr[k], color);
     }
     _popEntryModeVH();
     endWrite();
-    return currx - x;
+    return textWidth;
 }
 
 
 int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, const char *pStr, uint16_t color, uint8_t strLen) {
-    int16_t currx = x;
+
+    int16_t textWidth = 0;
 
     startWrite();
     _pushEntryModeVH();
@@ -1312,11 +1321,16 @@ int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, const char *pStr, uint16_
     for (uint8_t k = 0; k < strLen; k++) {
         uint8_t c = pgm_read_byte(pStr + k);
         if (c == 0) break;
-        currx += drawChar(currx, y, c, color) + 1;
+        if (textWidth + x >=_width) break;
+        if (textWidth + x + fontX() < 0) {
+            x+= fontX() + 1;
+            continue;
+        }
+        textWidth+=drawChar(textWidth+x, y, pStr[k], color);
     }
     _popEntryModeVH();
     endWrite();
-    return currx;
+    return textWidth;
 }
 
 
