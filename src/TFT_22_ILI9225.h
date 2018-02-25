@@ -363,7 +363,7 @@ class TFT_22_ILI9225 {
         /// @param    pStr Pointer to the string to draw
         /// @param    color 16-bit color, default=white
         /// @param    strLen [optional] number of chars to draw
-        /// @return	  Width of the drawn string
+        /// @return	  Width of the clipped drawn string
         int16_t drawText(int16_t x, int16_t y, char *pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
         int16_t drawText(int16_t x, int16_t y, const char *pStr, uint16_t color = COLOR_WHITE, uint8_t strLen = UINT8_MAX);
 
@@ -373,9 +373,9 @@ class TFT_22_ILI9225 {
         /// @param    pStr Pointer to the string to draw
         /// @param    color 16-bit color, default=white
         /// @param    strLen [optional] number of chars to draw
-        /// @return	  Width of the drawn string
-        int16_t drawGFXText(int16_t x, int16_t y, char *pString, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
-        int16_t drawGFXText(int16_t x, int16_t y, const char *pString, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
+        /// @return	  Width of the UNCLIPPED drawn string
+        int16_t drawGFXText(int16_t x, int16_t y, char *pStr, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
+        int16_t drawGFXText(int16_t x, int16_t y, const char *pStr, uint16_t color = COLOR_WHITE, uint8_t maxChars = UINT8_MAX);
 
         /// Get the width & height of a text string with the current GFX font
         /// @param    pStr Pointer to the string to draw

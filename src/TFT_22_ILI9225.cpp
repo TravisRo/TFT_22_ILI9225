@@ -1334,14 +1334,14 @@ int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, const char *pStr, uint16_
 }
 
 
-int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, char *pString, uint16_t color, uint8_t maxChars) {
+int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, char *pStr, uint16_t color, uint8_t maxChars) {
     int16_t currx = x;
 
     if (gfxFont) {
         startWrite();
         // Print every character in string
-        for (uint8_t k = 0; pString[k]!='\0' && k < maxChars; k++) {
-            currx += drawGFXChar(currx, y, pString[k], color) + 1;
+        for (uint8_t k = 0; pStr[k]!='\0' && k < maxChars; k++) {
+            currx += drawGFXChar(currx, y, pStr[k], color) + 1;
         }
         endWrite();
     }
@@ -1349,14 +1349,14 @@ int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, char *pString, uint16_
    return currx-x;
 }
 
-int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, const char *pString, uint16_t color, uint8_t maxChars) {
+int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, const char *pStr, uint16_t color, uint8_t maxChars) {
     int16_t currx = x;
 
     if (gfxFont) {
         startWrite();
         // Print every character in string
         for (uint8_t k = 0; k < maxChars; k++) {
-            uint8_t c = pgm_read_byte(pString + k);
+            uint8_t c = pgm_read_byte(pStr + k);
             if (c == 0) break;
             currx += drawGFXChar(currx, y, c, color) + 1;
         }
