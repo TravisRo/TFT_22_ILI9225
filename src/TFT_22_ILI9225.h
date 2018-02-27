@@ -11,7 +11,7 @@
 
 // NOTE: ////////////////////////////////////////////////////////////////////////
 // Set this to 0 if you do not want the arduino string class
-#define TFT_USE_STRING_CLASS 1
+#define TFT_USE_STRING_CLASS 0
 // Settiung to 0 enables text function with more functionality and less overhead
 /////////////////////////////////////////////////////////////////////////////////
 
