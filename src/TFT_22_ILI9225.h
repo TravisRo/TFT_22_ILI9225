@@ -11,7 +11,7 @@
 
 // NOTE: ////////////////////////////////////////////////////////////////////////
 // Set this to 0 if you do not want the arduino string class
-#define TFT_USE_STRING_CLASS 0
+#define TFT_USE_STRING_CLASS 1
 // Settiung to 0 enables text function with more functionality and less overhead
 /////////////////////////////////////////////////////////////////////////////////
 
@@ -327,11 +327,9 @@ class TFT_22_ILI9225 {
 
         /// Get the width & height of a text string with the current GFX font
         /// @param    str string to analyze
-        /// @param    x point coordinate, x-axis
-        /// @param    y point coordinate, y-axis
         /// @param    w width in pixels of string 
         /// @param    h height in pixels of string
-        void getGFXTextExtent(String str, int16_t x, int16_t y, int16_t *w, int16_t *h);
+        void getGFXTextExtent(String str, int16_t *w, int16_t *h);
 #endif
         /// Draw a single character with the current GFX font
         /// @param    x point coordinate, x-axis
@@ -378,13 +376,11 @@ class TFT_22_ILI9225 {
 
         /// Get the width & height of a text string with the current GFX font
         /// @param    pStr Pointer to the string to draw
-        /// @param    x point coordinate, x-axis
-        /// @param    y point coordinate, y-axis
         /// @param    w width in pixels of string 
         /// @param    h height in pixels of string
         /// @param    strLen [optional] number of chars to draw
-        void getGFXTextExtent(char *pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
-        void getGFXTextExtent(const char *pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
+        void getGFXTextExtent(char *pStr, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
+        void getGFXTextExtent(const char *pStr, int16_t *w, int16_t *h, uint8_t strLen = UINT8_MAX);
 #endif        
 
     private:

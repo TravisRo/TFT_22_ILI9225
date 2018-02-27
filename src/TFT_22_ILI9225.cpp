@@ -1172,7 +1172,7 @@ void TFT_22_ILI9225::getGFXCharExtent(uint8_t c, int16_t *gw, int16_t *gh, int16
 
 
 #if TFT_USE_STRING_CLASS == 1
-void TFT_22_ILI9225::getGFXTextExtent(String str, int16_t x, int16_t y, int16_t *w, int16_t *h) {
+void TFT_22_ILI9225::getGFXTextExtent(String str, int16_t *w, int16_t *h) {
     *w  = *h = 0;
     for (uint8_t k = 0; k < str.length(); k++) {
         uint8_t c = str.charAt(k);
@@ -1344,7 +1344,7 @@ void TFT_22_ILI9225::getGFXTextExtent(char *pStr, int16_t x, int16_t y, int16_t 
 }
 
 
-void TFT_22_ILI9225::getGFXTextExtent(const char *pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen) {
+void TFT_22_ILI9225::getGFXTextExtent(const char *pStr, int16_t *w, int16_t *h, uint8_t strLen) {
     *w = *h = 0;
     for (uint8_t k = 0; k < strLen; k++) {
         uint8_t c = pgm_read_byte(pStr+k);
