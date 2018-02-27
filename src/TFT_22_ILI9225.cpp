@@ -1333,7 +1333,7 @@ int16_t TFT_22_ILI9225::drawGFXText(int16_t x, int16_t y, const char *pStr, uint
 }
 
 
-void TFT_22_ILI9225::getGFXTextExtent(char *pStr, int16_t x, int16_t y, int16_t *w, int16_t *h, uint8_t strLen) {
+void TFT_22_ILI9225::getGFXTextExtent(char *pStr, int16_t *w, int16_t *h, uint8_t strLen) {
     *w = *h = 0;
     for (uint8_t k = 0; k < strLen && pStr[k]!='\0'; k++) {
         int16_t gw, gh, xa;
