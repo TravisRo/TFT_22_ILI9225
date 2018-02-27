@@ -110,7 +110,6 @@ typedef volatile uint32_t RwReg;
 #define COLOR_SNOW           0xFFDF      /* 255, 250, 250 */
 #define COLOR_YELLOW         0xFFE0      /* 255, 255,   0 */
 
-
 /* Font defines */
 #define FONT_HEADER_SIZE 4 // 1: pixel width of 1 font character, 2: pixel height, 
 #define readFontByte(x) pgm_read_byte(&cfont.font[x])  
@@ -340,7 +339,7 @@ class TFT_22_ILI9225 {
         /// @param    c character to draw
         /// @param    color 16-bit color
         /// @return   width of character in display pixels
-        int16_t drawGFXChar(int16_t x, int16_t y, unsigned char c, uint16_t color);
+        int16_t drawGFXChar(int16_t x, int16_t y, unsigned char c, uint16_t color = COLOR_WHITE);
 
         /// Draw a horizontal line quickly
         /// @param    x1 start point coordinate, x-axis
@@ -401,8 +400,6 @@ class TFT_22_ILI9225 {
         void _writeCommand(uint8_t HI, uint8_t LO);
         void _setCursor(int16_t x, int16_t y);
         void _drawPixel(int16_t x, int16_t y, uint16_t color);
-        void _pushEntryModeVH(void);
-        void _popEntryModeVH(void);
         uint16_t _bgColor;
 
 #if defined (__AVR__) || defined(TEENSYDUINO)
@@ -426,7 +423,7 @@ class TFT_22_ILI9225 {
 #else
         int8_t  _rst, _rs, _cs, _sdi, _clk, _led;
 #endif
-        int8_t writeRefCount, entryModeVHCnt;
+        int8_t writeRefCount;
         uint8_t  _orientation, _brightness;
         bool  hwSPI, blState;
 
@@ -447,8 +444,7 @@ class TFT_22_ILI9225 {
         uint8_t startH, endH, startV, endV, ramAddrOne, ramAddrTwo;
         int16_t _width, _height, cursor_x, cursor_y;
         int16_t _windowX0, _windowY0, _windowX1, _windowY1, _windowWidth, _windowHeight;
-        bool _useTransparentColor;
-        uint16_t _transparentColor;
+        uint16_t _entryMode;
 
 };
 

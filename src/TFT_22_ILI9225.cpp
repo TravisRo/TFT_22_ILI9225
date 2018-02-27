@@ -178,6 +178,15 @@
 #define SET_WINDOW_POS(_x0,_y0,_x1,_y1)	_setWindow(_x0, _y0, _x1, _y1)
 #define SET_WINDOW_MAX() _setWindow(0, 0, _width - 1, _height - 1)
 
+#define ENTRY_MODE_MASK      0x0038
+#define ENTRY_MODE_VERTICAL  0x0008
+#define ENTRY_MODE_HORIZ_INC 0x0010
+#define ENTRY_MODE_VERT_INC  0x0020
+
+#define toggleEntryMode(ENTRY_MODE_BITS) do {       \
+    _entryMode ^= (ENTRY_MODE_BITS);                \
+    _writeRegister(ILI9225_ENTRY_MODE, _entryMode); \
+}while(0)
 
 // Constructor when using software SPI.  All output pins are configurable.
 TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t sdi, int8_t clk, int8_t led) {
@@ -216,7 +225,6 @@ TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t led) {
     _brightness = 255; // Set to maximum brightness
     hwSPI = true;
     writeRefCount = 0;
-    entryModeVHCnt = 0;
     gfxFont = NULL;
 }
 
@@ -245,7 +253,7 @@ void TFT_22_ILI9225::begin()
     _spi = spi;
 #endif
     writeRefCount = 0;
-    entryModeVHCnt = 0;
+    _entryMode = 0x1030;
 
     // Set up reset pin
     if (_rst > 0) {
@@ -334,7 +342,7 @@ void TFT_22_ILI9225::begin()
     startWrite();
     _writeRegister(ILI9225_DRIVER_OUTPUT_CTRL, 0x011C); // set the display line number and display direction
     _writeRegister(ILI9225_LCD_AC_DRIVING_CTRL, 0x0100); // set 1 line inversion
-    _writeRegister(ILI9225_ENTRY_MODE, 0x1030); // set GRAM write direction and BGR=1.
+    _writeRegister(ILI9225_ENTRY_MODE, _entryMode); // set GRAM write direction and BGR=1.
     _writeRegister(ILI9225_DISP_CTRL1, 0x0000); // Display off
     _writeRegister(ILI9225_BLANK_PERIOD_CTRL1, 0x0808); // set the back porch and front porch
     _writeRegister(ILI9225_FRAME_CYCLE_CTRL, 0x1100); // set the clocks number per line
@@ -515,8 +523,7 @@ void TFT_22_ILI9225::setOrientation(uint8_t orientation, bool mirror ) {
     {
     case 1:
         _writeRegister(ILI9225_DRIVER_OUTPUT_CTRL, mirror ? 0x021C : 0x001C);
-        _writeRegister(ILI9225_ENTRY_MODE, 0x1038);
-
+        _entryMode = 0x1038; // default for this orientation
         startH = ILI9225_VERTICAL_WINDOW_ADDR2;
         endH = ILI9225_VERTICAL_WINDOW_ADDR1;
         startV = ILI9225_HORIZONTAL_WINDOW_ADDR2;
@@ -529,8 +536,7 @@ void TFT_22_ILI9225::setOrientation(uint8_t orientation, bool mirror ) {
 
     case 2:
         _writeRegister(ILI9225_DRIVER_OUTPUT_CTRL, mirror ? 0x031C : 0x021C);
-        _writeRegister(ILI9225_ENTRY_MODE, 0x1030);
-
+        _entryMode = 0x1030; // default for this orientation
         startH = ILI9225_HORIZONTAL_WINDOW_ADDR2;
         endH = ILI9225_HORIZONTAL_WINDOW_ADDR1;
         startV = ILI9225_VERTICAL_WINDOW_ADDR2;
@@ -543,8 +549,7 @@ void TFT_22_ILI9225::setOrientation(uint8_t orientation, bool mirror ) {
 
     case 3:
         _writeRegister(ILI9225_DRIVER_OUTPUT_CTRL, mirror ? 0x011C : 0x031C);
-        _writeRegister(ILI9225_ENTRY_MODE, 0x1038);
-
+        _entryMode = 0x1038; // default for this orientation
         startH = ILI9225_VERTICAL_WINDOW_ADDR2;
         endH = ILI9225_VERTICAL_WINDOW_ADDR1;
         startV = ILI9225_HORIZONTAL_WINDOW_ADDR2;
@@ -557,7 +562,7 @@ void TFT_22_ILI9225::setOrientation(uint8_t orientation, bool mirror ) {
 
     default: // 0
         _writeRegister(ILI9225_DRIVER_OUTPUT_CTRL, mirror ? 0x001C : 0x011C);
-        _writeRegister(ILI9225_ENTRY_MODE, 0x1030);
+        _entryMode = 0x1030; // default for this orientation
         startH = ILI9225_HORIZONTAL_WINDOW_ADDR2;
         endH = ILI9225_HORIZONTAL_WINDOW_ADDR1;
         startV = ILI9225_VERTICAL_WINDOW_ADDR2;
@@ -568,6 +573,7 @@ void TFT_22_ILI9225::setOrientation(uint8_t orientation, bool mirror ) {
         _height = ILI9225_LCD_HEIGHT;
         break;
     }
+    _writeRegister(ILI9225_ENTRY_MODE, _entryMode);
     SET_WINDOW_MAX();
     
 
@@ -892,12 +898,10 @@ void TFT_22_ILI9225::drawText(int16_t x, int16_t y, String s, uint16_t color) {
     int16_t currx = x;
 
     startWrite();
-    _pushEntryModeVH();
     // Print every character in string
     for (uint8_t k = 0; k < s.length(); k++) {
         currx += drawChar(currx, y, s.charAt(k), color);
     }
-    _popEntryModeVH();
     endWrite();
 }
 #endif
@@ -913,7 +917,7 @@ int16_t TFT_22_ILI9225::drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t colo
     charOffset++; // increment pointer to first character data byte
 
     startWrite();
-    _pushEntryModeVH();
+    toggleEntryMode(ENTRY_MODE_VERTICAL);
     SET_WINDOW_WH(x, y, charWidth+1, cfont.height);
     SPI_DC_HIGH();
     SPI_CS_LOW();
@@ -943,7 +947,7 @@ int16_t TFT_22_ILI9225::drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t colo
             };
         };
     };
-    _popEntryModeVH();
+    toggleEntryMode(ENTRY_MODE_VERTICAL);
     endWrite();
 
     return _windowX1 - _windowX0 + 1;
@@ -1208,40 +1212,6 @@ void TFT_22_ILI9225::_drawPixel(int16_t x, int16_t y, uint16_t color) {
 }
 
 
-void TFT_22_ILI9225::_pushEntryModeVH() {
-    if (++entryModeVHCnt == 1) {
-        switch (_orientation)
-        {
-    case 1:
-    case 3:
-        _writeRegister(ILI9225_ENTRY_MODE, 0x1030);
-        break;
-    default: 
-        _writeRegister(ILI9225_ENTRY_MODE, 0x1038);
-        break;
-
-        }
-    }	
-}
-
-
-void TFT_22_ILI9225::_popEntryModeVH() {
-    if (--entryModeVHCnt == 0) {
-        switch (_orientation)
-        {
-    case 1:
-    case 3:
-        _writeRegister(ILI9225_ENTRY_MODE, 0x1038);
-        break;
-    default: 
-        _writeRegister(ILI9225_ENTRY_MODE, 0x1030);
-        break;
-
-        }
-    }	
-}
-
-
 void TFT_22_ILI9225::drawHLine(int16_t x1, int16_t x2, int16_t y1, uint16_t color) {
     // //horizontal line
     if (x1 > x2) _swap(x1, x2);
@@ -1293,7 +1263,6 @@ int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, char *pStr, uint16_t colo
     int16_t textWidth = 0;
 
     startWrite();
-    _pushEntryModeVH();
     // Print every character in string
     for (uint8_t k = 0; k < strLen; k++) {
         uint8_t c = pStr[k];
@@ -1305,7 +1274,6 @@ int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, char *pStr, uint16_t colo
         }
         textWidth+=drawChar(textWidth+x, y, pStr[k], color);
     }
-    _popEntryModeVH();
     endWrite();
     return textWidth;
 }
@@ -1316,7 +1284,6 @@ int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, const char *pStr, uint16_
     int16_t textWidth = 0;
 
     startWrite();
-    _pushEntryModeVH();
     // Print every character in string
     for (uint8_t k = 0; k < strLen; k++) {
         uint8_t c = pgm_read_byte(pStr + k);
@@ -1328,7 +1295,6 @@ int16_t TFT_22_ILI9225::drawText(int16_t x, int16_t y, const char *pStr, uint16_
         }
         textWidth+=drawChar(textWidth+x, y, pStr[k], color);
     }
-    _popEntryModeVH();
     endWrite();
     return textWidth;
 }
