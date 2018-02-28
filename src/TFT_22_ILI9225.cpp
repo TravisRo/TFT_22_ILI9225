@@ -443,9 +443,18 @@ void TFT_22_ILI9225::_setWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1) 
         _writeRegister(startH, x0);
         _writeRegister(endV, y1);
         _writeRegister(startV, y0);
-        _writeRegister(ramAddrOne, x0);
-        _writeRegister(ramAddrTwo, y0);
 
+        if (_entryMode & ENTRY_MODE_HORIZ_INC)
+            _writeRegister(ramAddrOne, x0);
+        else
+            _writeRegister(ramAddrOne, x1);
+
+        if (_entryMode & ENTRY_MODE_VERT_INC)
+            _writeRegister(ramAddrTwo, y0);
+        else
+            _writeRegister(ramAddrTwo, y1);
+            
+  
         cursor_x = x0;
         cursor_y = y0;
         _windowX0 = x0;
@@ -951,6 +960,53 @@ int16_t TFT_22_ILI9225::drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t colo
     endWrite();
 
     return _windowX1 - _windowX0 + 1;
+}
+
+int16_t TFT_22_ILI9225::drawVertChar(int16_t x, int16_t y, uint8_t ch, uint16_t color, uint8_t direction) {
+    uint8_t charData, charWidth;
+    uint8_t h, i, j;
+    int16_t charOffset;
+
+    charOffset = (cfont.width * cfont.nbrows) + 1; // bytes used by each character
+    charOffset = (charOffset * (ch - cfont.offset)) + FONT_HEADER_SIZE; // char offset (add 4 for font header)
+    charWidth = readFontByte(charOffset); // get font width from 1st byte
+    charOffset++; // increment pointer to first character data byte
+
+    startWrite();
+    toggleEntryMode((direction==0?ENTRY_MODE_VERT_INC:ENTRY_MODE_HORIZ_INC));
+    SET_WINDOW_WH(x, y, cfont.height, (charWidth+1));
+    SPI_DC_HIGH();
+    SPI_CS_LOW();
+
+    for (i = 0; i <= charWidth; i++) { // each font "column" (+1 blank column for spacing)
+        if (y + i > _windowY1) break; // No need to process excess bits
+
+        h = 0; // keep track of char height
+        for (j = 0; j < cfont.nbrows; j++) { // each column byte
+            if (i == charWidth) charData = (uint8_t)0x0; // Insert blank column
+            else charData = readFontByte(charOffset);
+            charOffset++;
+
+            // Process every row in font character
+            for (uint8_t k = 0; k < 8; k++) {
+                if (h >= _windowWidth) break; // No need to process excess bits
+                if (bitRead(charData, k)) {
+                    _spiWrite(color >> 8);
+                    _spiWrite(color);
+                }
+                else {
+                    _spiWrite(_bgColor >> 8);
+                    _spiWrite(_bgColor);
+                }
+
+                h++;
+            };
+        };
+    };
+    toggleEntryMode((direction==0?ENTRY_MODE_VERT_INC:ENTRY_MODE_HORIZ_INC));
+    endWrite();
+
+    return _windowY1 - _windowY0 + 1;
 }
 
 // Draw a 1-bit image (bitmap) at the specified (x,y) position from the

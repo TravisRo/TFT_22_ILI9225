@@ -11,7 +11,7 @@
 
 // NOTE: ////////////////////////////////////////////////////////////////////////
 // Set this to 0 if you do not want the arduino string class
-#define TFT_USE_STRING_CLASS 1
+#define TFT_USE_STRING_CLASS 0
 // Settiung to 0 enables text function with more functionality and less overhead
 /////////////////////////////////////////////////////////////////////////////////
 
@@ -299,6 +299,16 @@ class TFT_22_ILI9225 {
         /// @return   width of character in display pixels
         int16_t drawChar(int16_t x, int16_t y, uint8_t ch, uint16_t color = COLOR_WHITE);
 
+
+        /// Draw vertical single character (pixel coordinates)
+        /// @param    x point coordinate, x-axis
+        /// @param    y point coordinate, y-axis
+        /// @param    ch ASCII character
+        /// @param    color 16-bit color, default=white
+        /// @param    direction 0 = Top to bottom, 1 = Bottom to top
+        /// @return   width of character in display pixels
+        int16_t drawVertChar(int16_t x, int16_t y, uint8_t ch, uint16_t color = COLOR_WHITE, uint8_t direction = 0);
+
         /// Draw bitmap
         /// @param    x point coordinate, x-axis
         /// @param    y point coordinate, y-axis
@@ -344,7 +354,7 @@ class TFT_22_ILI9225 {
         /// @param    x2 end point coordinate, x-axis
         /// @param    y1 start point coordinate, y-axis
         /// @param    color 16-bit color
-    void drawHLine(int16_t x1, int16_t x2, int16_t y1, uint16_t color);
+        void drawHLine(int16_t x1, int16_t x2, int16_t y1, uint16_t color);
  
         /// Draw a vertical line quickly
         /// @param    y1 start point coordinate, y-axis
