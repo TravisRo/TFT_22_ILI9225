@@ -973,7 +973,7 @@ int16_t TFT_22_ILI9225::drawVertChar(int16_t x, int16_t y, uint8_t ch, uint16_t 
     charOffset++; // increment pointer to first character data byte
 
     startWrite();
-    toggleEntryMode((direction==0?ENTRY_MODE_VERT_INC:ENTRY_MODE_HORIZ_INC));
+    toggleEntryMode((direction==1?ENTRY_MODE_VERT_INC:ENTRY_MODE_HORIZ_INC));
     SET_WINDOW_WH(x, y, cfont.height, (charWidth+1));
     SPI_DC_HIGH();
     SPI_CS_LOW();
@@ -1003,7 +1003,7 @@ int16_t TFT_22_ILI9225::drawVertChar(int16_t x, int16_t y, uint8_t ch, uint16_t 
             };
         };
     };
-    toggleEntryMode((direction==0?ENTRY_MODE_VERT_INC:ENTRY_MODE_HORIZ_INC));
+    toggleEntryMode((direction==1?ENTRY_MODE_VERT_INC:ENTRY_MODE_HORIZ_INC));
     endWrite();
 
     return _windowY1 - _windowY0 + 1;
@@ -1224,6 +1224,16 @@ void TFT_22_ILI9225::getGFXCharExtent(uint8_t c, int16_t *gw, int16_t *gh, int16
         // int8_t  xo = pgm_read_byte(&glyph->xOffset),
         //         yo = pgm_read_byte(&glyph->yOffset);
     }
+}
+
+
+void TFT_22_ILI9225::scroll(uint8_t start,uint8_t end, uint8_t amt) {
+    startWrite();
+    SET_WINDOW_MAX();
+    _writeRegister(ILI9225_VERTICAL_SCROLL_CTRL1,end);
+    _writeRegister(ILI9225_VERTICAL_SCROLL_CTRL2,start);
+    _writeRegister(ILI9225_VERTICAL_SCROLL_CTRL3,amt);
+    endWrite();
 }
 
 

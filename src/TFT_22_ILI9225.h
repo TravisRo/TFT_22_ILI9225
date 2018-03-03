@@ -363,6 +363,7 @@ class TFT_22_ILI9225 {
         /// @param    color 16-bit color
         void drawVLine(int16_t y1, int16_t y2, int16_t x1, uint16_t color);
 
+        void scroll(uint8_t start,uint8_t end, uint8_t amt);
 #if TFT_USE_STRING_CLASS == 0
 		/// Draw ASCII Text (pixel coordinates)
         /// @param    x point coordinate, x-axis
