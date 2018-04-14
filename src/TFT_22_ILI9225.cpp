@@ -164,10 +164,10 @@
 /// Helper macro for managing the cursor position
 #define INC_CURSOR() do {             \
     cursor_x++;                       \
-    if (cursor_x >= _windowX1 ) {     \
+    if (cursor_x > _windowX1 ) {      \
         cursor_x = _windowX0;         \
         cursor_y++;	                  \
-        if (cursor_y >= _windowY1) {  \
+        if (cursor_y > _windowY1) {   \
             cursor_y = _windowY0;     \
         }                             \
     }                                 \
@@ -187,6 +187,105 @@
     _entryMode ^= (ENTRY_MODE_BITS);                \
     _writeRegister(ILI9225_ENTRY_MODE, _entryMode); \
 }while(0)
+
+#define INC_CURSOR() _incCursor()
+
+void TFT_22_ILI9225::_incCursor()
+{
+    if (_entryMode & ENTRY_MODE_VERTICAL)
+    {
+        switch((_entryMode & (ENTRY_MODE_HORIZ_INC|ENTRY_MODE_VERT_INC)) >> 4)
+        {
+            case 3: // HINC, VINC
+                cursor_y++;
+                if (cursor_y > _windowY1 ) {
+                    cursor_y = _windowY0;
+                    cursor_x++;
+                    if (cursor_x > _windowX1) {
+                        cursor_x = _windowX0;
+                    }
+                }
+            break;
+            case 2: // HDEC, VINC
+                cursor_y++;
+                if (cursor_y > _windowY1 ) {
+                    cursor_y = _windowY0;
+                    cursor_x--;
+                    if (cursor_x < _windowX0) {
+                        cursor_x = _windowX1;
+                    }
+                }
+            break;        
+            case 1: // HINC, VDEC
+                cursor_y--;
+                if (cursor_y < _windowY0 ) {
+                    cursor_y = _windowY1;
+                    cursor_x++;
+                    if (cursor_x > _windowX1) {
+                        cursor_x = _windowX0;
+                    }
+                }
+            break;      
+            case 0: // HDEC, VDEC
+                cursor_y--;
+                if (cursor_y < _windowY0 ) {
+                    cursor_y = _windowY1;
+                    cursor_x--;
+                    if (cursor_x < _windowX0) {
+                        cursor_x = _windowX1;
+                    }
+               }
+            break;        
+        }
+    } else {
+        switch((_entryMode & (ENTRY_MODE_HORIZ_INC|ENTRY_MODE_VERT_INC)) >> 4)
+        {
+            case 3: // HINC, VINC
+                cursor_x++;
+                if (cursor_x > _windowX1 ) {
+                    cursor_x = _windowX0;
+                    cursor_y++;
+                    if (cursor_y > _windowY1) {
+                        cursor_y = _windowY0;
+                    }
+                }
+            break;
+
+            case 2: // HDEC, VINC
+                cursor_x--;
+                if (cursor_x < _windowX0 ) {
+                    cursor_x = _windowX1;
+                    cursor_y++;
+                    if (cursor_y > _windowY1) {
+                        cursor_y = _windowY0;
+                    }
+                }
+            break;
+
+            case 1: // HINC, VDEC
+                cursor_x++;
+                if (cursor_x > _windowX1 ) {
+                    cursor_x = _windowX0;
+                    cursor_y--;
+                    if (cursor_y < _windowY0) {
+                        cursor_y = _windowY1;
+                    }
+                }
+            break;
+
+            case 0: // HDEC, VDEC
+                cursor_x--;
+                if (cursor_x < _windowX0 ) {
+                    cursor_x = _windowX1;
+                    cursor_y--;
+                    if (cursor_y < _windowY0) {
+                        cursor_y = _windowY1;
+                    }
+                }
+            break;
+        }
+    }
+}
 
 // Constructor when using software SPI.  All output pins are configurable.
 TFT_22_ILI9225::TFT_22_ILI9225(int8_t rst, int8_t rs, int8_t cs, int8_t sdi, int8_t clk, int8_t led) {
@@ -1265,7 +1364,7 @@ void TFT_22_ILI9225::_setCursor(int16_t x0, int16_t y0) {
 
 
 void TFT_22_ILI9225::_drawPixel(int16_t x, int16_t y, uint16_t color) {
-    if (x < 0 || y < 0 || x > _windowX1 || y > _windowY1) return;
+    if (x > _windowX1 || y > _windowY1 || x < _windowX0 || y < _windowY0) return;
 
     _setCursor(x, y);
     SPI_DC_HIGH();
@@ -1422,3 +1521,190 @@ void TFT_22_ILI9225::getGFXTextExtent(const char *pStr, int16_t *w, int16_t *h, 
     }
 }
 #endif
+/*
+int16_t TFT_22_ILI9225::drawWChar(int16_t x, int16_t y, unsigned char c, uint16_t color)
+{
+
+    c -= (uint8_t)pgm_read_byte(&weaverFont->first);
+    WeaverGlyph *glyph  = &(((WeaverGlyph *)pgm_read_pointer(&weaverFont->glyph))[c]);
+    uint8_t  *bitmap = (uint8_t *)pgm_read_pointer(&weaverFont->bitmap);
+
+    uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
+    uint8_t  w  = pgm_read_byte(&glyph->width),
+             h  = pgm_read_byte(&glyph->height),
+             xa = pgm_read_byte(&glyph->xAdvance);
+    int8_t   xo = pgm_read_byte(&glyph->xOffset),
+             yo = pgm_read_byte(&glyph->yOffset);
+    uint8_t  xx, yy, bits = 0, bit = 0;
+
+    if (w == 0 || h == 0) return xa;
+    x = x + xo;
+    y = y + yo;
+    startWrite();
+    // NOTE: Char is clipped to the available window area
+    SET_WINDOW_WH(x, y, w, h);
+    for (yy=0; yy<h; yy++) {
+        for (xx=0; xx<w; xx++) {
+            if(!(bit++ & 7)) { 
+                bits = pgm_read_byte(&bitmap[bo++]);
+            }
+            if (bits & 0x80) {
+                _drawPixel(x + xx, y + yy, color);
+            }
+            bits <<= 1;
+        }
+    }
+    endWrite();
+
+    return (uint16_t)xa;
+}
+
+int16_t TFT_22_ILI9225::drawWChar(int16_t x, int16_t y, unsigned char c, uint16_t color)
+{
+
+    c -= (uint8_t)pgm_read_byte(&weaverFont->first);
+    WeaverGlyph *glyph  = &(((WeaverGlyph *)pgm_read_pointer(&weaverFont->glyph))[c]);
+    uint8_t  *bitmap = (uint8_t *)pgm_read_pointer(&weaverFont->bitmap);
+
+    uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
+    uint8_t  w  = pgm_read_byte(&glyph->width),
+             h  = pgm_read_byte(&glyph->height),
+             xa = pgm_read_byte(&glyph->xAdvance);
+    int8_t   xo = pgm_read_byte(&glyph->xOffset),
+             yo = pgm_read_byte(&glyph->yOffset);
+    uint8_t  xx, yy, bitIdx, pixelData, bitInc = 1;
+
+    if (w == 0 || h == 0) return xa;
+    x = x + xo;
+    y = y + yo;
+
+    if (bo & 0x8000)
+    {
+        bitInc = 2;
+        bo &= 0x7FFF;
+    }
+
+    startWrite();
+    // NOTE: Char is clipped to the available window area
+    SET_WINDOW_WH(x, y, w, h);
+    for (yy=0; yy<h; yy++) {
+        for (xx=0; xx<w; xx++) {
+            pixelData = pgm_read_byte(&bitmap[bo / 8]);
+            bitIdx = 7 - (bo % 8);
+            if (pixelData & (1 << bitIdx)) {
+                _drawPixel(x + xx, y + yy, color);
+            }
+            bo+=bitInc;
+        }
+    }
+    endWrite();
+
+    return (uint16_t)xa;
+}
+*/
+int16_t TFT_22_ILI9225::drawWChar(int16_t x, int16_t y, unsigned char c, uint16_t color)
+{
+
+    c -= (uint8_t)pgm_read_byte(&weaverFont->first);
+    WeaverGlyph *glyph  = &(((WeaverGlyph *)pgm_read_pointer(&weaverFont->glyph))[c]);
+    uint8_t  *bitmap = (uint8_t *)pgm_read_pointer(&weaverFont->bitmap);
+
+    uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
+    uint8_t  w  = pgm_read_byte(&glyph->width),
+             h  = pgm_read_byte(&glyph->height),
+             xa = pgm_read_byte(&glyph->xAdvance);
+    int8_t   xo = pgm_read_byte(&glyph->xOffset),
+             yo = pgm_read_byte(&glyph->yOffset);
+    uint8_t  xx, yy, bitIdx, pixelData,  fold=0;
+
+    if (w == 0 || h == 0) return xa;
+    x = x + xo;
+    y = y + yo;
+
+    if (h & 0x80) {
+        // The bitmap data contains only the top half but flipping this half top-to-bottom
+        // gives is the bottom half.
+        // NOTE: the glyph->height always reflects the full height
+        fold = 1;
+        h &= 0x7F;
+    }
+    else if (w & 0x80) {
+        // The bitmap data contains only the left half but flipping this half left-to-right
+        // gives us the right half.
+         // NOTE: the glyph->width always reflects the full width
+       fold = 2;
+        w &= 0x7F;
+        // BITMAP data orientation changes here!
+        // Quick fill cols from left-to-right instead of rows (top-to-bottom)
+        toggleEntryMode(ENTRY_MODE_VERTICAL);
+    }
+
+    startWrite();
+
+    // NOTE: Char is clipped to the available window area
+    SET_WINDOW_WH(x, y, w, h);
+
+    switch(fold)
+    {
+        case 0: // Normal bitmap
+            for (yy=0; yy<h; yy++) {
+                for (xx=0; xx<w; xx++) {
+                    pixelData = pgm_read_byte(&bitmap[bo / 8]);
+                    bitIdx = 7 - (bo % 8);
+                    if (pixelData & (1 << bitIdx))
+                        _drawPixel(x + xx, y + yy, color);
+                    bo++;
+                }
+            }
+        break;
+
+        case 1: // Folded bitmap (top-to-bottom)
+            for (yy=0; yy<h; yy++) {
+                for (xx=0; xx<w; xx++) {
+                    pixelData = pgm_read_byte(&bitmap[bo / 8]);
+                    bitIdx = 7 - (bo % 8);
+                    if (pixelData & (1 << bitIdx))
+                        _drawPixel(x + xx, y + yy, color);
+                    bo++;
+                }
+
+                if (yy == ((h+1)/2)-1) {
+                    bo -= w;
+                    if (h % 2) bo -= w;
+                }
+                else if (yy >= (h/2)) {
+                    bo -= w * 2;
+                }
+            }
+        break;
+
+        case 2: // Folded bitmap (left-to-right)
+            for (xx=0; xx<w; xx++) {
+                // NOTE: Fill cols from left-to-right instead of rows (top-to-bottom)
+                for (yy=0; yy<h; yy++) {
+                    pixelData = pgm_read_byte(&bitmap[bo / 8]);
+                    bitIdx = 7 - (bo % 8);
+                    if (pixelData & (1 << bitIdx))
+                        _drawPixel(x + xx, y + yy, color);
+                    bo++;
+                }
+                if (xx == ((w+1)/2)-1) {
+                    bo -= h;
+                    if (w % 2) bo -= h;
+                }
+                else if (xx >= (w/2)) {
+                    bo -= h * 2;
+                }
+            }
+            toggleEntryMode(ENTRY_MODE_VERTICAL);
+        break;
+    }
+
+    endWrite();
+
+    return (uint16_t)xa;
+}
+
+void TFT_22_ILI9225::setWFont(const WeaverFont *f) {
+    weaverFont = (WeaverFont *)f;
+}

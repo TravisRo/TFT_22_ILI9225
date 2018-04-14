@@ -8,6 +8,7 @@
 #endif
 #include <SPI.h>
 #include "gfxfont.h"
+#include "FontWeaver.h"
 
 // NOTE: ////////////////////////////////////////////////////////////////////////
 // Set this to 0 if you do not want the arduino string class
@@ -407,6 +408,7 @@ class TFT_22_ILI9225 {
         void _writeCommand(uint8_t HI, uint8_t LO);
         void _setCursor(int16_t x, int16_t y);
         void _drawPixel(int16_t x, int16_t y, uint16_t color);
+        void _incCursor();
         uint16_t _bgColor;
 
 #if defined (__AVR__) || defined(TEENSYDUINO)
@@ -453,6 +455,19 @@ class TFT_22_ILI9225 {
         int16_t _windowX0, _windowY0, _windowX1, _windowY1, _windowWidth, _windowHeight;
         uint16_t _entryMode;
 
+    private:
+        WeaverFont* weaverFont;
+        
+    public:
+
+             /// Draw a single character with the current GFX font
+        /// @param    x point coordinate, x-axis
+        /// @param    y point coordinate, y-axis
+        /// @param    c character to draw
+        /// @param    color 16-bit color
+        /// @return   width of character in display pixels
+        int16_t drawWChar(int16_t x, int16_t y, unsigned char c, uint16_t color = COLOR_WHITE);
+        void setWFont(const WeaverFont *f = NULL);
 };
 
 #endif
